@@ -1,5 +1,5 @@
 {
-  "generatedAt": "AUTO",
+  "generatedAt": "INITIAL_SEED",
   "sources": [],
   "students": [
     {
@@ -4920,6 +4920,727 @@
       "year": "2026",
       "exam": "Second Term Exam",
       "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "1",
+      "reg": "",
+      "name": "মুমতাহিনা (মীম)",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 99
+        },
+        {
+          "name": "বাংলা",
+          "marks": 99
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 90
+        },
+        {
+          "name": "গণিত",
+          "marks": 92
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 98
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 70
+        }
+      ],
+      "total": 548,
+      "average": 91.33,
+      "point": 4.83,
+      "grade": "A",
+      "rank": 7
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "2",
+      "reg": "",
+      "name": "মোহা: হক আনাছ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 99
+        },
+        {
+          "name": "বাংলা",
+          "marks": 100
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 100
+        },
+        {
+          "name": "গণিত",
+          "marks": 100
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 96
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 100
+        }
+      ],
+      "total": 595,
+      "average": 99.17,
+      "point": 5,
+      "grade": "A+",
+      "rank": "১ম"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "3",
+      "reg": "",
+      "name": "আব্দুলস্নাহ আ: আনাছ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 94
+        },
+        {
+          "name": "বাংলা",
+          "marks": 90
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 90
+        },
+        {
+          "name": "গণিত",
+          "marks": 93
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 60
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 45
+        }
+      ],
+      "total": 472,
+      "average": 78.67,
+      "point": 4.25,
+      "grade": "A",
+      "rank": 11
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "4",
+      "reg": "",
+      "name": "আব্দুল আলিম",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 100
+        },
+        {
+          "name": "বাংলা",
+          "marks": 98
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 100
+        },
+        {
+          "name": "গণিত",
+          "marks": 100
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 99
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 96
+        }
+      ],
+      "total": 593,
+      "average": 98.83,
+      "point": 5,
+      "grade": "A+",
+      "rank": "২য়"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "5",
+      "reg": "",
+      "name": "ফাতেমা তাবাসসুম",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 97
+        },
+        {
+          "name": "বাংলা",
+          "marks": 98
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 90
+        },
+        {
+          "name": "গণিত",
+          "marks": 100
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 55
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 65
+        }
+      ],
+      "total": 505,
+      "average": 84.17,
+      "point": 4.42,
+      "grade": "A",
+      "rank": 8
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "6",
+      "reg": "",
+      "name": "আবরার মাহমুদ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 97
+        },
+        {
+          "name": "বাংলা",
+          "marks": 90
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 80
+        },
+        {
+          "name": "গণিত",
+          "marks": 80
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 80
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 50
+        }
+      ],
+      "total": 477,
+      "average": 79.5,
+      "point": 4.67,
+      "grade": "A",
+      "rank": 10
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "7",
+      "reg": "",
+      "name": "মো: আলিমদার",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 97
+        },
+        {
+          "name": "বাংলা",
+          "marks": 100
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 97
+        },
+        {
+          "name": "গণিত",
+          "marks": 98
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 100
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 98
+        }
+      ],
+      "total": 590,
+      "average": 98.33,
+      "point": 5,
+      "grade": "A+",
+      "rank": "৩য়"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "8",
+      "reg": "",
+      "name": "মাইসা জান্নাত",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 96
+        },
+        {
+          "name": "বাংলা",
+          "marks": 95
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 85
+        },
+        {
+          "name": "গণিত",
+          "marks": 85
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 99
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 98
+        }
+      ],
+      "total": 558,
+      "average": 93,
+      "point": 5,
+      "grade": "A+",
+      "rank": 6
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "9",
+      "reg": "",
+      "name": "সাফওয়ান",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 97
+        },
+        {
+          "name": "বাংলা",
+          "marks": 98
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 100
+        },
+        {
+          "name": "গণিত",
+          "marks": 100
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 97
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 93
+        }
+      ],
+      "total": 585,
+      "average": 97.5,
+      "point": 5,
+      "grade": "A+",
+      "rank": 4
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "10",
+      "reg": "",
+      "name": "রাইয়ান হোসেন",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 94
+        },
+        {
+          "name": "বাংলা",
+          "marks": 85
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 80
+        },
+        {
+          "name": "গণিত",
+          "marks": 70
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 80
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 80
+        }
+      ],
+      "total": 489,
+      "average": 81.5,
+      "point": 4.83,
+      "grade": "A",
+      "rank": 9
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "11",
+      "reg": "",
+      "name": "ওসমান গণি",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 96
+        },
+        {
+          "name": "বাংলা",
+          "marks": 95
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 80
+        },
+        {
+          "name": "গণিত",
+          "marks": 90
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 45
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 40
+        }
+      ],
+      "total": 446,
+      "average": 74.33,
+      "point": 4,
+      "grade": "A",
+      "rank": 12
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "12",
+      "reg": "",
+      "name": "আফিসা তাবাচ্ছুম",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": "*"
+        },
+        {
+          "name": "বাংলা",
+          "marks": "*"
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": "*"
+        },
+        {
+          "name": "গণিত",
+          "marks": "*"
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": "*"
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": "*"
+        }
+      ],
+      "total": null,
+      "average": null,
+      "point": null,
+      "grade": "অনুপস্থিত",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "13",
+      "reg": "",
+      "name": "আব্দুলস্নাহ আ: আনাছ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": "*"
+        },
+        {
+          "name": "বাংলা",
+          "marks": "*"
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": "*"
+        },
+        {
+          "name": "গণিত",
+          "marks": "*"
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": "*"
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": "*"
+        }
+      ],
+      "total": null,
+      "average": null,
+      "point": null,
+      "grade": "অনুপস্থিত",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "12",
+      "reg": "",
+      "name": "সায়েম আলফা",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 96
+        },
+        {
+          "name": "বাংলা",
+          "marks": 95
+        },
+        {
+          "name": "ইংরেজী",
+          "marks": 98
+        },
+        {
+          "name": "গণিত",
+          "marks": 98
+        },
+        {
+          "name": "কালিমা ও মাসাইল",
+          "marks": 99
+        },
+        {
+          "name": "হাদিস শরীফ",
+          "marks": 96
+        }
+      ],
+      "total": 582,
+      "average": 97,
+      "point": 5,
+      "grade": "A+",
+      "rank": 5
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "80-100",
+      "reg": "",
+      "name": "অ+",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 5
+        }
+      ],
+      "total": null,
+      "average": 5.0,
+      "point": null,
+      "grade": "",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "70-79",
+      "reg": "",
+      "name": "অ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 4
+        }
+      ],
+      "total": null,
+      "average": 4.0,
+      "point": null,
+      "grade": "",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "60-79",
+      "reg": "",
+      "name": "অ-",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 3.5
+        }
+      ],
+      "total": null,
+      "average": 3.5,
+      "point": null,
+      "grade": "",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "50-79",
+      "reg": "",
+      "name": "ই",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 3
+        }
+      ],
+      "total": null,
+      "average": 3.0,
+      "point": null,
+      "grade": "",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "40-79",
+      "reg": "",
+      "name": "ঈ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 2
+        }
+      ],
+      "total": null,
+      "average": 2.0,
+      "point": null,
+      "grade": "",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "33-79",
+      "reg": "",
+      "name": "উ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 1
+        }
+      ],
+      "total": null,
+      "average": 1.0,
+      "point": null,
+      "grade": "",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
+      "className": "Narsari",
+      "classBn": "নার্সারি",
+      "roll": "0-32",
+      "reg": "",
+      "name": "ঋ",
+      "subjects": [
+        {
+          "name": "আরবী",
+          "marks": 0
+        }
+      ],
+      "total": null,
+      "average": 0.0,
+      "point": null,
+      "grade": "",
+      "rank": "—"
+    },
+    {
+      "year": "2026",
+      "exam": "Second Term Exam",
+      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
       "className": "Hifz",
       "classBn": "হিফজ",
       "roll": "1",
@@ -5944,727 +6665,6 @@
       "subjects": [
         {
           "name": "কুরআন মাজিদ",
-          "marks": 0
-        }
-      ],
-      "total": null,
-      "average": 0.0,
-      "point": null,
-      "grade": "",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "1",
-      "reg": "",
-      "name": "মুমতাহিনা (মীম)",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 99
-        },
-        {
-          "name": "বাংলা",
-          "marks": 99
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 90
-        },
-        {
-          "name": "গণিত",
-          "marks": 92
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 98
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 70
-        }
-      ],
-      "total": 548,
-      "average": 91.33,
-      "point": 4.83,
-      "grade": "A",
-      "rank": 7
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "2",
-      "reg": "",
-      "name": "মোহা: হক আনাছ",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 99
-        },
-        {
-          "name": "বাংলা",
-          "marks": 100
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 100
-        },
-        {
-          "name": "গণিত",
-          "marks": 100
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 96
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 100
-        }
-      ],
-      "total": 595,
-      "average": 99.17,
-      "point": 5,
-      "grade": "A+",
-      "rank": "১ম"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "3",
-      "reg": "",
-      "name": "আব্দুলস্নাহ আ: আনাছ",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 94
-        },
-        {
-          "name": "বাংলা",
-          "marks": 90
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 90
-        },
-        {
-          "name": "গণিত",
-          "marks": 93
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 60
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 45
-        }
-      ],
-      "total": 472,
-      "average": 78.67,
-      "point": 4.25,
-      "grade": "A",
-      "rank": 11
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "4",
-      "reg": "",
-      "name": "আব্দুল আলিম",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 100
-        },
-        {
-          "name": "বাংলা",
-          "marks": 98
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 100
-        },
-        {
-          "name": "গণিত",
-          "marks": 100
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 99
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 96
-        }
-      ],
-      "total": 593,
-      "average": 98.83,
-      "point": 5,
-      "grade": "A+",
-      "rank": "২য়"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "5",
-      "reg": "",
-      "name": "ফাতেমা তাবাসসুম",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 97
-        },
-        {
-          "name": "বাংলা",
-          "marks": 98
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 90
-        },
-        {
-          "name": "গণিত",
-          "marks": 100
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 55
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 65
-        }
-      ],
-      "total": 505,
-      "average": 84.17,
-      "point": 4.42,
-      "grade": "A",
-      "rank": 8
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "6",
-      "reg": "",
-      "name": "আবরার মাহমুদ",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 97
-        },
-        {
-          "name": "বাংলা",
-          "marks": 90
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 80
-        },
-        {
-          "name": "গণিত",
-          "marks": 80
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 80
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 50
-        }
-      ],
-      "total": 477,
-      "average": 79.5,
-      "point": 4.67,
-      "grade": "A",
-      "rank": 10
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "7",
-      "reg": "",
-      "name": "মো: আলিমদার",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 97
-        },
-        {
-          "name": "বাংলা",
-          "marks": 100
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 97
-        },
-        {
-          "name": "গণিত",
-          "marks": 98
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 100
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 98
-        }
-      ],
-      "total": 590,
-      "average": 98.33,
-      "point": 5,
-      "grade": "A+",
-      "rank": "৩য়"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "8",
-      "reg": "",
-      "name": "মাইসা জান্নাত",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 96
-        },
-        {
-          "name": "বাংলা",
-          "marks": 95
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 85
-        },
-        {
-          "name": "গণিত",
-          "marks": 85
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 99
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 98
-        }
-      ],
-      "total": 558,
-      "average": 93,
-      "point": 5,
-      "grade": "A+",
-      "rank": 6
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "9",
-      "reg": "",
-      "name": "সাফওয়ান",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 97
-        },
-        {
-          "name": "বাংলা",
-          "marks": 98
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 100
-        },
-        {
-          "name": "গণিত",
-          "marks": 100
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 97
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 93
-        }
-      ],
-      "total": 585,
-      "average": 97.5,
-      "point": 5,
-      "grade": "A+",
-      "rank": 4
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "10",
-      "reg": "",
-      "name": "রাইয়ান হোসেন",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 94
-        },
-        {
-          "name": "বাংলা",
-          "marks": 85
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 80
-        },
-        {
-          "name": "গণিত",
-          "marks": 70
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 80
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 80
-        }
-      ],
-      "total": 489,
-      "average": 81.5,
-      "point": 4.83,
-      "grade": "A",
-      "rank": 9
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "11",
-      "reg": "",
-      "name": "ওসমান গণি",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 96
-        },
-        {
-          "name": "বাংলা",
-          "marks": 95
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 80
-        },
-        {
-          "name": "গণিত",
-          "marks": 90
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 45
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 40
-        }
-      ],
-      "total": 446,
-      "average": 74.33,
-      "point": 4,
-      "grade": "A",
-      "rank": 12
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "12",
-      "reg": "",
-      "name": "আফিসা তাবাচ্ছুম",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": "*"
-        },
-        {
-          "name": "বাংলা",
-          "marks": "*"
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": "*"
-        },
-        {
-          "name": "গণিত",
-          "marks": "*"
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": "*"
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": "*"
-        }
-      ],
-      "total": null,
-      "average": null,
-      "point": null,
-      "grade": "অনুপস্থিত",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "12",
-      "reg": "",
-      "name": "সায়েম আলফা",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 96
-        },
-        {
-          "name": "বাংলা",
-          "marks": 95
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": 98
-        },
-        {
-          "name": "গণিত",
-          "marks": 98
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": 99
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": 96
-        }
-      ],
-      "total": 582,
-      "average": 97,
-      "point": 5,
-      "grade": "A+",
-      "rank": 5
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "13",
-      "reg": "",
-      "name": "আব্দুলস্নাহ আ: আনাছ",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": "*"
-        },
-        {
-          "name": "বাংলা",
-          "marks": "*"
-        },
-        {
-          "name": "ইংরেজী",
-          "marks": "*"
-        },
-        {
-          "name": "গণিত",
-          "marks": "*"
-        },
-        {
-          "name": "কালিমা ও মাসাইল",
-          "marks": "*"
-        },
-        {
-          "name": "হাদিস শরীফ",
-          "marks": "*"
-        }
-      ],
-      "total": null,
-      "average": null,
-      "point": null,
-      "grade": "অনুপস্থিত",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "80-100",
-      "reg": "",
-      "name": "অ+",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 5
-        }
-      ],
-      "total": null,
-      "average": 5.0,
-      "point": null,
-      "grade": "",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "70-79",
-      "reg": "",
-      "name": "অ",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 4
-        }
-      ],
-      "total": null,
-      "average": 4.0,
-      "point": null,
-      "grade": "",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "60-79",
-      "reg": "",
-      "name": "অ-",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 3.5
-        }
-      ],
-      "total": null,
-      "average": 3.5,
-      "point": null,
-      "grade": "",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "50-79",
-      "reg": "",
-      "name": "ই",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 3
-        }
-      ],
-      "total": null,
-      "average": 3.0,
-      "point": null,
-      "grade": "",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "40-79",
-      "reg": "",
-      "name": "ঈ",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 2
-        }
-      ],
-      "total": null,
-      "average": 2.0,
-      "point": null,
-      "grade": "",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "33-79",
-      "reg": "",
-      "name": "উ",
-      "subjects": [
-        {
-          "name": "আরবী",
-          "marks": 1
-        }
-      ],
-      "total": null,
-      "average": 1.0,
-      "point": null,
-      "grade": "",
-      "rank": "—"
-    },
-    {
-      "year": "2026",
-      "exam": "Second Term Exam",
-      "examBn": "দ্বিতীয় সাময়িক পরীক্ষা",
-      "className": "Narsari",
-      "classBn": "নার্সারি",
-      "roll": "0-32",
-      "reg": "",
-      "name": "ঋ",
-      "subjects": [
-        {
-          "name": "আরবী",
           "marks": 0
         }
       ],
