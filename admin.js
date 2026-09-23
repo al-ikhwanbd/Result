@@ -7,10 +7,72 @@ const bnDigits='০১২৩৪৫৬৭৮৯'; const bnNum=v=>String(v??'').re
 const esc=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 function msg(el,text,type='error'){el.textContent=text;el.className='message '+type;}
 function opt(values,placeholder,fn){return '<option value="">'+placeholder+'</option>'+values.map(x=>`<option value="${esc(x.id??x.value)}">${esc(fn?fn(x):x.label??x.name_bn??x.name??x.year)}</option>`).join('');}
+async function importCurrentResults(){
+  if(!sb) throw new Error('Supabase সংযোগ পাওয়া যায়নি।');
+  const {data: existing, error: existingErr}=await sb.from('results').select('id').limit(1);
+  if(existingErr) throw existingErr;
+  if((existing||[]).length) return {imported:false,count:0,message:'Supabase-এ ফলাফল আগে থেকেই আছে।'};
+  const res=await fetch('data/results.json',{cache:'no-store'});
+  if(!res.ok) throw new Error('data/results.json লোড করা যায়নি।');
+  const payload=await res.json();
+  const rows=Array.isArray(payload?.students)?payload.students:[];
+  if(!rows.length) return {imported:false,count:0,message:'বর্তমান results.json-এ কোনো ফলাফল নেই।'};
+
+  const years=new Map(), exams=new Map(), classes=new Map(), subjects=new Map(), students=new Map();
+  for(const x of rows){
+    const year=Number(x.year)||2026;
+    if(!years.has(year)) years.set(year,{year,active:true});
+    const examCode=x.exam||'Annual Exam';
+    if(!exams.has(examCode)) exams.set(examCode,{code:examCode,name_bn:x.examBn||examCode,active:true,sort_order:exams.size+1});
+    const classCode=x.className||('Class-'+x.classBn);
+    if(!classes.has(classCode)) classes.set(classCode,{code:classCode,name_bn:x.classBn||classCode,sort_order:classes.size+1,active:true});
+  }
+  const {data: ydata,error:ye}=await sb.from('academic_years').upsert([...years.values()],{onConflict:'year'}).select(); if(ye) throw ye;
+  const {data: edata,error:ee}=await sb.from('exams').upsert([...exams.values()],{onConflict:'code'}).select(); if(ee) throw ee;
+  const {data: cdata,error:ce}=await sb.from('classes').upsert([...classes.values()],{onConflict:'code'}).select(); if(ce) throw ce;
+  ydata.forEach(v=>years.set(Number(v.year),v)); edata.forEach(v=>exams.set(v.code,v)); cdata.forEach(v=>classes.set(v.code,v));
+
+  for(const x of rows){
+    const c=classes.get(x.className); if(!c) continue;
+    for(const sub of (x.subjects||[])){
+      const key=c.id+'|'+sub.name;
+      if(!subjects.has(key)) subjects.set(key,{class_id:c.id,name_bn:sub.name,sort_order:subjects.size+1,active:true});
+    }
+  }
+  const {data:allSubs,error:ase}=await sb.from('subjects').select('*'); if(ase) throw ase;
+  const missingSubs=[...subjects.values()].filter(v=>!(allSubs||[]).some(a=>a.class_id===v.class_id&&a.name_bn===v.name_bn));
+  let sdata=[...(allSubs||[])];
+  if(missingSubs.length){const {data:ins,error:ie}=await sb.from('subjects').insert(missingSubs).select(); if(ie) throw ie; sdata=sdata.concat(ins||[]);}
+  sdata.forEach(v=>subjects.set(v.class_id+'|'+v.name_bn,v));
+
+  for(const x of rows){
+    const c=classes.get(x.className); const key=c.id+'|'+x.roll;
+    if(!students.has(key)) students.set(key,{roll:String(x.roll),name:x.name||'',class_id:c.id,guardian_name:x.guardian||'',active:true});
+  }
+  const {data: stdata,error:ste}=await sb.from('students').upsert([...students.values()],{onConflict:'roll,class_id'}).select(); if(ste) throw ste;
+  stdata.forEach(v=>students.set(v.class_id+'|'+v.roll,v));
+
+  let imported=0;
+  for(const x of rows){
+    const c=classes.get(x.className), y=years.get(Number(x.year)), e=exams.get(x.exam||'Annual Exam'), st=students.get(c.id+'|'+x.roll);
+    if(!c||!y||!e||!st) continue;
+    const total=Number(x.total)||0, average=Number(x.average)||0, point=Number(x.point)||0;
+    const resultPayload={student_id:st.id,year_id:y.id,exam_id:e.id,class_id:c.id,total,average,point,grade:x.grade||'',rank:parseInt(String(x.rank).replace(/[^0-9]/g,''),10)||null,status:'published',updated_at:new Date().toISOString()};
+    const {data:rdata,error:re}=await sb.from('results').upsert(resultPayload,{onConflict:'student_id,year_id,exam_id'}).select().single(); if(re) throw re;
+    const marks=(x.subjects||[]).map(sub=>{const ss=subjects.get(c.id+'|'+sub.name); return ss?{result_id:rdata.id,subject_id:ss.id,marks:sub.marks===''||sub.marks==null?null:Number(sub.marks)}:null;}).filter(Boolean);
+    if(marks.length){const {error:me}=await sb.from('result_marks').upsert(marks,{onConflict:'result_id,subject_id'}); if(me) throw me;}
+    imported++;
+  }
+  return {imported:true,count:imported,message:`বর্তমান ফলাফল থেকে ${imported}টি ফলাফল Supabase-এ নেওয়া হয়েছে।`};
+}
+
 async function loadAll(){
   if(!sb) return;
   const names=['years:academic_years','exams:exams','classes:classes','subjects:subjects','students:students','results:results','notices:notices','settings:site_settings'];
   for(const item of names){const [key,table]=item.split(':'); const {data,error}=await sb.from(table).select('*').order(table==='academic_years'?'year':'created_at',{ascending:table==='academic_years'}); if(error) throw error; cache[key]=data||[];}
+  if(cache.results.length===0){
+    try{ const r=await importCurrentResults(); if(r.imported){ const el=$('importStatus'); if(el){el.textContent=r.message;el.className='message success';} for(const item of names){const [key,table]=item.split(':'); const {data,error}=await sb.from(table).select('*').order(table==='academic_years'?'year':'created_at',{ascending:table==='academic_years'}); if(error) throw error; cache[key]=data||[];} } }catch(e){ const el=$('importStatus'); if(el){el.textContent='বর্তমান ফলাফল Supabase-এ নেওয়া যায়নি: '+e.message;el.className='message error';} }
+  }
   renderAll();
 }
 function renderAll(){
