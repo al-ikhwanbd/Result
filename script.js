@@ -28,33 +28,49 @@ const overlay = document.getElementById("menuOverlay");
 document.getElementById("year").textContent = "২০২৬";
 
 async function loadResultData(){
+  // Supabase-এ ডাটা না থাকলেও ওয়েবসাইট যেন বন্ধ না হয়ে যায়—তখন bundled JSON fallback ব্যবহার করবে।
+  async function loadLocalData(){
+    const res=await fetch("data/results.json?ts="+Date.now(),{cache:"no-store"});
+    if(!res.ok) throw new Error("Could not load local result data");
+    const json=await res.json();
+    const local=Array.isArray(json) ? json : (Array.isArray(json.students) ? json.students : []);
+    if(!local.length) throw new Error("Local result data is empty");
+    students.length=0;
+    students.push(...local);
+    loadYears();
+  }
+
   try{
     const cfg=window.SUPABASE_CONFIG||{};
     const useSupabase=window.supabase && cfg.url && cfg.anonKey && !cfg.url.includes("YOUR_") && !cfg.anonKey.includes("YOUR_");
+
     if(useSupabase){
       const client=window.supabase.createClient(cfg.url,cfg.anonKey);
       const {data,error}=await client.from("results").select(`id,total,average,point,grade,rank,status,student_id,year_id,exam_id,class_id,students(roll,name),academic_years(year),exams(code,name_bn),classes(code,name_bn),result_marks(marks,subjects(name_bn))`).eq("status","published");
-      if(error) throw error;
-      students.length=0;
-      students.push(...(data||[]).map(r=>({
-        year:String(r.academic_years?.year||""), exam:r.exams?.code||"", examBn:r.exams?.name_bn||"",
-        className:r.classes?.code||"", classBn:r.classes?.name_bn||"", roll:r.students?.roll||"", name:r.students?.name||"",
-        total:r.total, average:r.average, point:r.point, grade:r.grade, rank:r.rank,
-        subjects:(r.result_marks||[]).sort((a,b)=>String(a.subjects?.name_bn||"").localeCompare(String(b.subjects?.name_bn||""),'bn')).map(m=>({name:m.subjects?.name_bn||"",marks:m.marks}))
-      })));
-      loadYears(); return;
+
+      // Supabase query-তে error হলে, অথবা DB এখনো খালি থাকলে, local JSON ব্যবহার করব।
+      if(!error && Array.isArray(data) && data.length){
+        students.length=0;
+        students.push(...data.map(r=>({
+          year:String(r.academic_years?.year||""), exam:r.exams?.code||"", examBn:r.exams?.name_bn||"",
+          className:r.classes?.code||"", classBn:r.classes?.name_bn||"", roll:r.students?.roll||"", name:r.students?.name||"",
+          total:r.total, average:r.average, point:r.point, grade:r.grade, rank:r.rank,
+          subjects:(r.result_marks||[]).sort((a,b)=>String(a.subjects?.name_bn||"").localeCompare(String(b.subjects?.name_bn||""),'bn')).map(m=>({name:m.subjects?.name_bn||"",marks:m.marks}))
+        })));
+        loadYears();
+        return;
+      }
+      if(error) console.warn("Supabase result query failed; using local result data.", error);
+      else console.warn("Supabase has no published results yet; using local result data.");
     }
-    const res=await fetch("data/results.json?ts="+Date.now(),{cache:"no-store"});
-    if(!res.ok) throw new Error("Could not load result data");
-    const data=await res.json();
-    students.length=0; students.push(...(Array.isArray(data) ? data : (data.students||[]))); loadYears();
+
+    await loadLocalData();
   }catch(err){
     console.error(err);
     message.textContent="ফলাফল ডাটা লোড করা যায়নি। অনুগ্রহ করে কিছুক্ষণ পরে আবার চেষ্টা করুন।";
     message.className="message error";
   }
 }
-
 const bnDigits = "০১২৩৪৫৬৭৮৯";
 function bnNum(v){ return String(v ?? "").replace(/\d/g, d => bnDigits[d]); }
 function unique(list){ return [...new Set(list)]; }
