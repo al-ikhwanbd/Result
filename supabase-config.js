@@ -1,5 +1,7 @@
-// Supabase frontend configuration
-// এখানে শুধু Project URL এবং Publishable/Anon Key রাখবেন।
-// কখনো service_role / secret key এখানে দেবেন না.
-window.SUPABASE_URL = 'https://pgauqrvplyqxtsfntgnk.supabase.co';
-window.SUPABASE_ANON_KEY = 'sb_publishable_D2u6dQqcK3NJTfvKNqaVgw_rsH9_cSY';
+// Supabase configuration
+// Publishable/anon key is safe for browser use when RLS policies are configured.
+// NEVER put the service_role/secret key in this file.
+window.SUPABASE_CONFIG = {
+  url: "https://iuawyqzjoilfxoyvbjsp.supabase.co",
+  anonKey: "sb_publishable_wNkzmAcTTnOiOCTpWY2w0Q_rnKTmteh"
+};

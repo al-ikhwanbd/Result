@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#087f4e">
+  <title>Admin Panel — দারুন নাজাত আইডিয়াল মাদরাসা</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+  <header class="top-header admin-header">
+    <div class="nav container">
+      <a class="brand" href="index.html">
+        <img class="logo" src="logo.jpg" alt="মাদরাসার লোগো">
+        <div class="brand-text"><strong>দারুন নাজাত আইডিয়াল মাদরাসা</strong><span>Admin Panel</span></div>
+      </a>
+      <button id="logoutBtn" class="admin-logout hidden">লগআউট</button>
+    </div>
+  </header>
+
+  <main class="container admin-main">
+    <section id="loginCard" class="result-card admin-login-card">
+      <div class="section-title"><span class="title-icon">🔐</span><div><h2>Admin Login</h2><p>শুধু অনুমোদিত প্রশাসক এখানে প্রবেশ করতে পারবেন</p></div></div>
+      <form id="loginForm">
+        <div class="field"><label>Email <b>*</b></label><input id="loginEmail" type="email" required placeholder="admin@example.com"></div>
+        <div class="field"><label>Password <b>*</b></label><input id="loginPassword" type="password" required placeholder="Password"></div>
+        <button class="btn btn-primary full-btn" type="submit">লগইন করুন</button>
+      </form>
+      <div id="loginMessage" class="message hidden"></div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="admin-topline"><div><h1>Admin Dashboard</h1><p id="adminEmailText">—</p></div><a class="back-site" href="index.html">🌐 Website দেখুন</a></div>
+      <div id="setupNotice" class="message hidden"></div>
+
+      <div class="admin-stats" id="stats"></div>
+
+      <div class="admin-tabs" role="tablist">
+        <button class="admin-tab active" data-tab="results">📊 ফলাফল</button>
+        <button class="admin-tab" data-tab="students">👨‍🎓 শিক্ষার্থী</button>
+        <button class="admin-tab" data-tab="academic">📚 বছর / পরীক্ষা / শ্রেণি / বিষয়</button>
+        <button class="admin-tab" data-tab="notices">📢 Notice</button>
+        <button class="admin-tab" data-tab="settings">⚙️ Website Settings</button>
+      </div>
+
+      <section class="admin-panel active" id="tab-results">
+        <div class="panel-head"><div><h2>ফলাফল ব্যবস্থাপনা</h2><p>ফলাফল যোগ, সম্পাদনা ও মুছে ফেলুন</p></div><button class="btn btn-primary" id="newResultBtn">＋ নতুন ফলাফল</button></div>
+        <div class="filter-grid">
+          <div class="field"><label>সাল</label><select id="filterYear"></select></div>
+          <div class="field"><label>পরীক্ষা</label><select id="filterExam"></select></div>
+          <div class="field"><label>শ্রেণি</label><select id="filterClass"></select></div>
+          <div class="field"><label>রোল/নাম</label><input id="resultSearch" placeholder="খুঁজুন..."></div>
+        </div>
+        <div class="table-scroll"><table class="admin-table"><thead><tr><th>রোল</th><th>নাম</th><th>শ্রেণি</th><th>মোট</th><th>গড়</th><th>গ্রেড</th><th>অবস্থান</th><th>কাজ</th></tr></thead><tbody id="resultsTbody"></tbody></table></div>
+      </section>
+
+      <section class="admin-panel" id="tab-students">
+        <div class="panel-head"><div><h2>শিক্ষার্থী ব্যবস্থাপনা</h2><p>শিক্ষার্থীর মৌলিক তথ্য পরিচালনা করুন</p></div><button class="btn btn-primary" id="newStudentBtn">＋ নতুন শিক্ষার্থী</button></div>
+        <div class="table-scroll"><table class="admin-table"><thead><tr><th>রোল</th><th>নাম</th><th>শ্রেণি</th><th>অভিভাবক</th><th>কাজ</th></tr></thead><tbody id="studentsTbody"></tbody></table></div>
+      </section>
+
+      <section class="admin-panel" id="tab-academic">
+        <div class="panel-head"><div><h2>Academic Settings</h2><p>বছর, পরীক্ষা, শ্রেণি ও বিষয় পরিচালনা করুন</p></div></div>
+        <div class="mini-grid">
+          <div class="manage-box"><h3>📅 বছর</h3><div id="yearsList"></div><form class="inline-add" id="yearForm"><input id="yearName" placeholder="যেমন 2027" required><button class="btn btn-primary">যোগ</button></form></div>
+          <div class="manage-box"><h3>📝 পরীক্ষা</h3><div id="examsList"></div><form class="inline-add" id="examForm"><input id="examName" placeholder="পরীক্ষার নাম" required><input id="examCode" placeholder="Code" required><button class="btn btn-primary">যোগ</button></form></div>
+          <div class="manage-box"><h3>📚 শ্রেণি</h3><div id="classesList"></div><form class="inline-add" id="classForm"><input id="classNameBn" placeholder="বাংলা নাম" required><input id="classCode" placeholder="Code" required><button class="btn btn-primary">যোগ</button></form></div>
+          <div class="manage-box"><h3>📖 বিষয়</h3><div id="subjectsList"></div><form class="inline-add" id="subjectForm"><input id="subjectName" placeholder="বিষয়ের নাম" required><select id="subjectClass"></select><button class="btn btn-primary">যোগ</button></form></div>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="tab-notices">
+        <div class="panel-head"><div><h2>Notice Management</h2><p>Website-এ প্রকাশিত নোটিশ নিয়ন্ত্রণ করুন</p></div><button class="btn btn-primary" id="newNoticeBtn">＋ নতুন Notice</button></div>
+        <div id="noticesList" class="notice-admin-list"></div>
+      </section>
+
+      <section class="admin-panel" id="tab-settings">
+        <div class="panel-head"><div><h2>Website Settings</h2><p>Website-এর লেখা, যোগাযোগ ও অন্যান্য তথ্য পরিবর্তন করুন</p></div></div>
+        <form id="settingsForm" class="settings-grid">
+          <div class="field"><label>মাদরাসার নাম</label><input data-setting="school_name"></div>
+          <div class="field"><label>Subtitle</label><input data-setting="school_subtitle"></div>
+          <div class="field"><label>ঠিকানা</label><input data-setting="address"></div>
+          <div class="field"><label>মোবাইল</label><input data-setting="phone"></div>
+          <div class="field full"><label>Footer text</label><input data-setting="footer_text"></div>
+          <div class="field full"><label>ফলাফল দেখার নির্দেশনা</label><textarea data-setting="instructions" rows="5"></textarea></div>
+          <div class="full"><button class="btn btn-primary" type="submit">Settings Save করুন</button></div>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="resultDialog" class="admin-dialog"><form method="dialog" id="resultFormAdmin"><div class="dialog-head"><h2 id="resultDialogTitle">নতুন ফলাফল</h2><button type="button" class="dialog-close" data-close="resultDialog">×</button></div><div class="form-grid"><input type="hidden" id="editResultId"><div class="field"><label>শিক্ষার্থী</label><select id="resultStudent" required></select></div><div class="field"><label>বছর</label><select id="resultYearAdmin" required></select></div><div class="field"><label>পরীক্ষা</label><select id="resultExamAdmin" required></select></div><div class="field"><label>শ্রেণি</label><select id="resultClassAdmin" required></select></div></div><div id="marksFields" class="marks-grid"></div><div class="dialog-actions"><button type="button" class="btn btn-light" data-close="resultDialog">বাতিল</button><button class="btn btn-primary" type="submit">Save</button></div></form></dialog>
+
+  <dialog id="studentDialog" class="admin-dialog"><form method="dialog" id="studentFormAdmin"><div class="dialog-head"><h2>শিক্ষার্থী</h2><button type="button" class="dialog-close" data-close="studentDialog">×</button></div><input type="hidden" id="editStudentId"><div class="form-grid"><div class="field"><label>নাম</label><input id="studentName" required></div><div class="field"><label>রোল</label><input id="studentRoll" required></div><div class="field"><label>শ্রেণি</label><select id="studentClass" required></select></div><div class="field"><label>অভিভাবক</label><input id="studentGuardian"></div></div><div class="dialog-actions"><button type="button" class="btn btn-light" data-close="studentDialog">বাতিল</button><button class="btn btn-primary">Save</button></div></form></dialog>
+
+  <dialog id="noticeDialog" class="admin-dialog"><form method="dialog" id="noticeFormAdmin"><div class="dialog-head"><h2>Notice</h2><button type="button" class="dialog-close" data-close="noticeDialog">×</button></div><input type="hidden" id="editNoticeId"><div class="field"><label>শিরোনাম</label><input id="noticeTitle" required></div><div class="field"><label>বিস্তারিত</label><textarea id="noticeBody" rows="6" required></textarea></div><label class="check"><input id="noticePublished" type="checkbox" checked> Website-এ প্রকাশ করুন</label><div class="dialog-actions"><button type="button" class="btn btn-light" data-close="noticeDialog">বাতিল</button><button class="btn btn-primary">Save</button></div></form></dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
