@@ -1,76 +1,46 @@
-দারুন নাজাত আইডিয়াল মাদ্রাসা — Automatic Excel Result Website
+আল ইখওয়ান ইসলামী সংস্থা বাংলাদেশ — হিসাব ব্যবস্থাপনা (FINAL)
 
-এই প্যাকেজটি আগের পছন্দের ওয়েবসাইট ডিজাইন/সিস্টেমের উপর ভিত্তি করে তৈরি।
-ব্যক্তিগত ফলাফল, ক্লাসওয়ারী ফলাফল, মোবাইল মেনু এবং Print/PDF ব্যবস্থা রাখা হয়েছে।
-
-AUTOMATIC EXCEL SYSTEM
-----------------------
-ভবিষ্যতে শুধু excel/ folder-এ Excel ফাইল upload করবেন।
-GitHub Actions Excel থেকে data/results.json স্বয়ংক্রিয়ভাবে তৈরি করবে।
-
-Excel ফাইলের নামের নিয়ম:
-2026-1st-term.xlsx
-2026-2nd-term.xlsx
-2026-annual.xlsx
-2027-1st-term.xlsx
-ইত্যাদি।
-
-Excel-এর ভিতরের format বর্তমান 2nd Term Examination.xlsx-এর মতো রাখবেন।
-Class-1, Class-2, Class-3, Class-4, Class-5, Class-6, Narsari এবং Hifz sheet ব্যবহার করা যাবে।
-Formula_Test sheet থাকলে সেটি ফলাফলে নেওয়া হবে না।
-
-প্রথমবার GitHub-এ:
-1. ZIP খুলে সব ফাইল repository-তে upload করুন।
-2. GitHub Pages আগের মতো index.html থেকে চালু রাখুন।
-3. Settings > Actions > General-এ Workflow permissions যদি দেখা যায়, "Read and write permissions" নির্বাচন করে Save করুন (সাধারণত workflow-তেই contents: write দেওয়া আছে)।
-
-এরপর:
-1. excel/ folder খুলুন।
-2. নতুন Excel upload করুন।
-3. Commit changes দিন।
-4. Actions tab-এ "Update Result Data from Excel" workflow শেষ হওয়া পর্যন্ত অপেক্ষা করুন।
-5. কয়েক মুহূর্ত পর website refresh করুন।
-
-একই year + exam-এর Excel আবার upload করলে আগের সেই year + exam-এর data নতুন Excel দিয়ে replace হবে।
-নতুন year + exam upload করলে পুরোনো ফলাফল রেখে নতুন ফলাফল যোগ হবে।
+এই সংস্করণে:
+- প্রথম পেইজের বড় নামের উপরের অতিরিক্ত ছোট নাম বাদ দেওয়া হয়েছে।
+- ব্যক্তিগত হিসাব থেকে মেইন মেনু বাটন বাদ দেওয়া হয়েছে।
+- ব্যক্তিগত হিসাব এখন শুধু মোট পরিশোধ ও মোট বাকি দেখায়।
+- ব্যক্তিগত হিসাবের সাল নির্বাচনে “সকল বছর” যুক্ত হয়েছে।
+- “সকল বছর” নির্বাচন করলে বছরভিত্তিক বিস্তারিত না দেখিয়ে শুধু মোট পরিশোধ ও মোট বাকি দেখায়।
+- ব্যক্তিগত/সকল সদস্য/মোট হিসাব/তহবিল/নোটিশ রিপোর্টে ফলাফল দেখানোর পর প্রিন্ট/PDF বাটন থাকে।
+- PDF/Print-এ নির্বাচন বক্স, মেনু ও ওয়েবসাইটের অপ্রয়োজনীয় অংশ আসে না; শুধু রিপোর্ট আসে।
+- সকল সদস্যদের হিসাবের সাল নির্বাচনে “সকল বছর” যুক্ত হয়েছে।
+- মাসিক টেবিলে টাকা না দিলে ঘর খালি থাকে; বাকি আলাদা করে প্রতিটি মাসে লেখা হয় না।
+- সদস্যের নাম এক লাইনে রাখার ব্যবস্থা করা হয়েছে।
+- “বকেয়া লিস্ট” এর জায়গায় “মোট হিসাব” করা হয়েছে।
+- মোট হিসাবে মোট জমা, মোট লভ্যাংশ, মোট খরচ ও বর্তমান অবশিষ্ট তহবিল দেখায়।
+- অবশিষ্ট তহবিলের খাতে ব্যবহারের তালিকা, মোট ব্যবহার এবং বর্তমান তহবিলের সংক্ষিপ্ত হিসাব দেখায়।
+- Admin-এ যুক্ত করার জন্য একটি Selection Box + অনুসন্ধান করুন এবং সম্পাদনার জন্য আলাদা Selection Box + অনুসন্ধান করুন রাখা হয়েছে।
+- বিদ্যমান Supabase URL, publishable/anon key, Auth এবং Database কাঠামো অপরিবর্তিত রাখা হয়েছে।
 
 গুরুত্বপূর্ণ:
-- Excel-এর নামের নিয়ম ঠিক রাখুন।
-- Excel-এর sheet/column format বর্তমান template অনুযায়ী রাখুন।
-- GitHub Pages public হলে website-এর ফলাফল public থাকবে।
+- Supabase database বা seed SQL আবার চালানোর প্রয়োজন নেই।
+- supabase-config.js-এ publishable/anon key-ই ব্যবহার করুন। Secret/service_role key ব্যবহার করবেন না।
+- GitHub Pages-এ আপলোড করার সময় এই ZIP-এর ফাইলগুলো বর্তমান সাইটের মূল ফোল্ডারে replace করুন।
 
-নতুন সংযোজন:
-- মেইন মেনুতে “A+ ও মেধা তালিকা” যোগ করা হয়েছে।
-- ফলাফল ডাটার Grade = A+ হলে পরীক্ষার্থী স্বয়ংক্রিয়ভাবে A+ তালিকায় আসবে।
-- A+ তালিকায় এবং মেধা তালিকায় ক্রমিক নং, পরীক্ষার্থীর নাম, শ্রেণী, মোট নম্বর, গড়, পয়েন্ট, গ্রেড ও অবস্থান দেখানো হয়।
-- দুই তালিকাতেই শ্রেণির ক্রম: নার্সারি → প্রথম → দ্বিতীয় → তৃতীয় → চতুর্থ → পঞ্চম → ষষ্ঠ → হিফজ।
-- মেধা তালিকায় প্রতি শ্রেণির কেবল ১ম, ২য় ও ৩য় অবস্থানের শিক্ষার্থীরা দেখানো হয়; সমান অবস্থান হলে একই অবস্থানের শিক্ষার্থীরাও থাকে।
-- তালিকাটি A4 ল্যান্ডস্কেপ প্রিন্ট/PDF-এর জন্য সাজানো হয়েছে।
-- নতুন ফলাফল ডাটায় A+ বা শীর্ষ ৩ অবস্থানের তথ্য থাকলে আলাদা করে তালিকা আপডেট করার প্রয়োজন নেই; data/results.json আপডেট হলে তালিকাও আপডেট হবে।
+হিসাব গণনার গুরুত্বপূর্ণ নিয়ম (FINAL v3):
+- bokea শিটকে বকেয়া হিসাবের উৎস হিসেবে ব্যবহার করা হয় না।
+- প্রতিটি বার্ষিক হিসাবের ভিত্তিতে প্রতি সদস্যের বার্ষিক পাওনা = ১২ মাস × ৫০০ টাকা = ৬,০০০ টাকা।
+- কোনো মাসের payment record না থাকলেও সেই মাসের পাওনা বকেয়ার মধ্যে স্বয়ংক্রিয়ভাবে গণনা হবে।
+- ব্যক্তিগত হিসাব, সকল সদস্যদের হিসাব এবং সকল বছরের হিসাবের বকেয়া এই নিয়মে অটোমেটিক গণনা হবে।
+- ফলে Excel-এর annual sheets-এর নিয়ম অনুসারে bokea-এর পুরোনো symbolic হিসাব আলাদা করে আর প্রয়োজন হবে না।
 
-- ব্যক্তিগত ফলাফল প্রিন্ট/PDF-এর জন্য নতুন পরিচ্ছন্ন A4 ডিজাইন যোগ করা হয়েছে।
 
-ADMIN PANEL + SUPABASE (NEW)
-----------------------------
-বর্তমান public website-এর design/layout অপরিবর্তিত রেখে Admin Panel যুক্ত করা হয়েছে।
+FINAL v4 হিসাব সংশোধন:
+- Excel-এর বার্ষিক নিয়ম অনুযায়ী প্রতি সদস্য প্রতি বছরে 12 × 500 = 6000 টাকা নির্ধারিত পাওনা।
+- বকেয়া = 6000 - ঐ বছরে প্রকৃত মাসিক জমা।
+- bokea শিট থেকে বকেয়া নেওয়া হয় না।
+- সকল বছর নির্বাচনে নির্বাচিত সব হিসাব বছরের বকেয়া যোগ হয়।
 
-ফাইল:
-- admin.html        = Admin Panel
-- admin.css         = Admin Panel styling (মূল site-এর একই green/card style)
-- admin.js          = Login, dashboard, CRUD ও result management
-- supabase-config.js= Supabase Project URL + anon key
-- supabase-schema.sql = Database tables + RLS policies
 
-সেটআপ:
-1. Supabase-এ একটি project তৈরি করুন।
-2. SQL Editor-এ supabase-schema.sql-এর পুরো SQL চালান।
-3. Authentication > Users থেকে একজন Admin user তৈরি করুন (email/password)।
-4. Project Settings > API থেকে Project URL ও anon/public key কপি করে supabase-config.js-এ বসান।
-5. সব ফাইল GitHub/Netlify-এ upload/deploy করুন।
-6. /admin.html খুলে Admin email/password দিয়ে login করুন।
+FINAL v7 সংশোধন:
+- সকল বছর selector-এ স্থির ক্রম 2021, 2022, 2023, 2024।
+- 2025 কোনো পুরোনো রেকর্ডে থাকলে display/filter হিসাবের সময় 2024 হিসেবে গণনা হবে।
+- Print/PDF header-এ প্রথমে বড় করে সংস্থার নাম, তার নিচে ছোট করে ঠিকানা, তারপর রিপোর্ট শিরোনাম থাকবে।
 
-গুরুত্বপূর্ণ:
-- supabase-config.js-এ শুধু anon/public key ব্যবহার করবেন; service_role key কখনো browser-এ দেবেন না।
-- Public website Supabase configured থাকলে database-এর published results পড়বে; configuration না থাকলে আগের data/results.json থেকে ফলাফল দেখাবে।
-- Admin Panel থেকে student, result, year, exam, class, subject, notice ও website settings পরিচালনা করা যাবে।
-- আপনার existing design, public navigation এবং print/PDF layout রাখা হয়েছে।
+
+V2 CONFIGURED: নতুন Supabase project URL/key বসানো হয়েছে। Phone login চালাতে Supabase Auth > Phone Provider এবং SMS provider (যেমন Twilio) আলাদাভাবে সক্রিয় করতে হবে। কোনো password database-এ plaintext/hash হিসেবে এই website code-এ রাখা হয়নি।

@@ -1,571 +1,616 @@
-// ফলাফল ডাটা: ২০২৬ সালের দ্বিতীয় সাময়িক পরীক্ষা
-const students = [];
-let currentPersonalStudent = null;
+const sb=(window.supabase&&window.SUPABASE_URL&&window.SUPABASE_ANON_KEY)
+  ?window.supabase.createClient(window.SUPABASE_URL,window.SUPABASE_ANON_KEY):null;
+// Admin authentication is intentionally kept in the Member Auth project,
+// while the existing Hisab data continues to use the main project above.
+const memberSb=(window.supabase&&window.MEMBER_SUPABASE_URL&&window.MEMBER_SUPABASE_ANON_KEY)
+  ?window.supabase.createClient(window.MEMBER_SUPABASE_URL,window.MEMBER_SUPABASE_ANON_KEY):null;
 
-const yearSelect = document.getElementById("resultYear");
-const exam = document.getElementById("exam");
-const className = document.getElementById("className");
-const form = document.getElementById("resultForm");
-const message = document.getElementById("message");
-const resultArea = document.getElementById("resultArea");
-const personalPanel = document.getElementById("personalPanel");
-const classPanel = document.getElementById("classPanel");
-const classYear = document.getElementById("classYear");
-const classWiseExam = document.getElementById("classWiseExam");
-const classWiseName = document.getElementById("classWiseName");
-const classWiseResult = document.getElementById("classWiseResult");
-const aplusPanel = document.getElementById("aplusPanel");
-const aplusResult = document.getElementById("aplusResult");
-const aplusMeta = document.getElementById("aplusMeta");
-const listForm = document.getElementById("listForm");
-const listType = document.getElementById("listType");
-const listYear = document.getElementById("listYear");
-const listExam = document.getElementById("listExam");
-const listPrintRow = document.getElementById("listPrintRow");
-const menu = document.getElementById("mobileMenu");
-const overlay = document.getElementById("menuOverlay");
+const months=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+const money=n=>`৳ ${Number(n||0).toLocaleString('bn-BD')}`;
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const q=id=>document.getElementById(id);
+let members=[],payments=[],profits=[],expenses=[],assets=[],notices=[],adminUser=null,years=[];
+// বার্ষিক হিসাবের মূল নিয়ম: প্রতি সদস্যের জন্য বছরে ১২ মাস × ৳৫০০ = ৳৬,০০০।
+// বকেয়া সবসময় বার্ষিক মোট পাওনা থেকে প্রকৃত পরিশোধ বাদ দিয়ে অটোমেটিক গণনা হবে।
+const DEFAULT_MONTHLY_REQUIRED=500;
+let MONTHLY_REQUIRED=DEFAULT_MONTHLY_REQUIRED;
+const MONTHS_PER_YEAR=12;
+const YEARLY_REQUIRED=()=>MONTHLY_REQUIRED*MONTHS_PER_YEAR;
+let dividendVisibility={},mainAdminReady=false;
 
-document.getElementById("year").textContent = "২০২৬";
-
-async function loadResultData(){
-  // Supabase-এ ডাটা না থাকলেও ওয়েবসাইট যেন বন্ধ না হয়ে যায়—তখন bundled JSON fallback ব্যবহার করবে।
-  async function loadLocalData(){
-    const res=await fetch("data/results.json?ts="+Date.now(),{cache:"no-store"});
-    if(!res.ok) throw new Error("Could not load local result data");
-    const json=await res.json();
-    const local=Array.isArray(json) ? json : (Array.isArray(json.students) ? json.students : []);
-    if(!local.length) throw new Error("Local result data is empty");
-    students.length=0;
-    students.push(...local);
-    loadYears();
-  }
-
-  try{
-    const cfg=window.SUPABASE_CONFIG||{};
-    const useSupabase=window.supabase && cfg.url && cfg.anonKey && !cfg.url.includes("YOUR_") && !cfg.anonKey.includes("YOUR_");
-
-    if(useSupabase){
-      const client=window.supabase.createClient(cfg.url,cfg.anonKey);
-      const {data,error}=await client.from("results").select(`id,total,average,point,grade,rank,status,student_id,year_id,exam_id,class_id,students(roll,name),academic_years(year),exams(code,name_bn),classes(code,name_bn),result_marks(marks,subjects(name_bn))`).eq("status","published");
-
-      // Supabase query-তে error হলে, অথবা DB এখনো খালি থাকলে, local JSON ব্যবহার করব।
-      if(!error && Array.isArray(data) && data.length){
-        students.length=0;
-        students.push(...data.map(r=>({
-          year:String(r.academic_years?.year||""), exam:r.exams?.code||"", examBn:r.exams?.name_bn||"",
-          className:r.classes?.code||"", classBn:r.classes?.name_bn||"", roll:r.students?.roll||"", name:r.students?.name||"",
-          total:r.total, average:r.average, point:r.point, grade:r.grade, rank:r.rank,
-          subjects:(r.result_marks||[]).sort((a,b)=>String(a.subjects?.name_bn||"").localeCompare(String(b.subjects?.name_bn||""),'bn')).map(m=>({name:m.subjects?.name_bn||"",marks:m.marks}))
-        })));
-        loadYears();
-        return;
-      }
-      if(error) console.warn("Supabase result query failed; using local result data.", error);
-      else console.warn("Supabase has no published results yet; using local result data.");
-    }
-
-    await loadLocalData();
-  }catch(err){
-    console.error(err);
-    message.textContent="ফলাফল ডাটা লোড করা যায়নি। অনুগ্রহ করে কিছুক্ষণ পরে আবার চেষ্টা করুন।";
-    message.className="message error";
-  }
+function detectMonthlyRequired(){
+  const first=payments
+    .filter(p=>Number(p.paid_amount||0)>0)
+    .slice()
+    .sort((a,b)=>Number(normalizeYear(a.year))-Number(normalizeYear(b.year))||Number(a.month)-Number(b.month))[0];
+  const detected=Number(first?.required_amount||0);
+  MONTHLY_REQUIRED=detected>0?detected:DEFAULT_MONTHLY_REQUIRED;
+  return MONTHLY_REQUIRED;
 }
-const bnDigits = "০১২৩৪৫৬৭৮৯";
-function bnNum(v){ return String(v ?? "").replace(/\d/g, d => bnDigits[d]); }
-function unique(list){ return [...new Set(list)]; }
-function fillSelect(select, values, placeholder){
-  select.innerHTML = `<option value="">${placeholder}</option>`;
-  values.forEach(v => {
-    const opt=document.createElement("option");
-    opt.value=v.value ?? v; opt.textContent=v.label ?? v;
-    select.appendChild(opt);
-  });
-}
-function esc(v){
-  return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-}
-
-const examOptions = [
-  {value:"First Term Exam", label:"প্রথম সাময়িক পরীক্ষা"},
-  {value:"Second Term Exam", label:"দ্বিতীয় সাময়িক পরীক্ষা"},
-  {value:"Annual Exam", label:"বার্ষিক পরীক্ষা"}
-];
-
 function getYears(){
-  return unique(students.map(s => String(s.year || "2026"))).sort((a,b)=>Number(b)-Number(a));
+  const found=new Set();
+  const addYear=y=>{
+    const year=String(y??'').trim();
+    if(year)found.add(year);
+  };
+  // প্রতিষ্ঠানের চালু হিসাবের বছরগুলো স্থায়ীভাবে থাকবে; নতুন কোনো বছরে
+  // প্রকৃত টাকা/হিসাব থাকলে সেটিও স্বয়ংক্রিয়ভাবে যোগ হবে।
+  ['2021','2022','2023','2024'].forEach(addYear);
+  payments.forEach(p=>{if(Number(p.paid_amount||0)>0)addYear(p.year)});
+  return [...found].sort((a,b)=>Number(a)-Number(b));
 }
-function getClasses(year){
-  return unique(students.filter(s=>String(s.year||"")===String(year)).map(s=>s.className)).map(c=>{
-    const f=students.find(s=>String(s.year||"")===String(year)&&s.className===c);
-    return {value:c,label:f?.classBn || c};
-  });
+function fillYearSelect(el,includeAll=false){
+  if(!el)return;
+  const placeholder='<option value="">-- সাল নির্বাচন করুন --</option>';
+  const all=includeAll?'<option value="all">সকল বছর</option>':'';
+  el.innerHTML=placeholder+all+years.map(y=>`<option value="${esc(y)}">${esc(y)}</option>`).join('');
 }
-function loadYears(){
-  const years=getYears().map(y=>({value:y,label:bnNum(y)}));
-  fillSelect(yearSelect,years,"-- সাল নির্বাচন করুন --");
-  fillSelect(classYear,years,"-- সাল নির্বাচন করুন --");
-  fillSelect(listYear,years,"-- সাল নির্বাচন করুন --");
-  fillSelect(listExam,examOptions,"-- পরীক্ষা নির্বাচন করুন --");
-  resetPersonal(false);
-  resetClassWise(false);
+function fillYearSelectors(){
+  years=getYears();
+  fillYearSelect(q('personalYear'),true);
+  fillYearSelect(q('allMembersYear'),true);
+  fillYearSelect(q('paymentManageYear'),true);
+  if(q('paymentManageMonth')) q('paymentManageMonth').value='';
+  if(q('paymentManageMember')) q('paymentManageMember').value='';
 }
-function loadPersonalClasses(){
-  const y=yearSelect.value;
-  if(!y){
-    fillSelect(className,[],"-- আগে সাল নির্বাচন করুন --");
-    className.disabled=true;
-    return;
-  }
-  fillSelect(className,getClasses(y),"-- শ্রেণি নির্বাচন করুন --");
-  className.disabled=getClasses(y).length===0;
+function memberSort(a,b){
+  const sa=Number(a.serial_no), sb=Number(b.serial_no);
+  const aHas=Number.isFinite(sa)&&sa>0, bHas=Number.isFinite(sb)&&sb>0;
+  if(aHas&&bHas&&sa!==sb)return sa-sb;
+  if(aHas!==bHas)return aHas?-1:1;
+  return String(a.name||'').localeCompare(String(b.name||''),'bn');
 }
-function resetPersonal(clearYear=true){
-  if(clearYear) yearSelect.value="";
-  fillSelect(exam,examOptions,"-- পরীক্ষা নির্বাচন করুন --");
-  fillSelect(className,[],"-- আগে সাল নির্বাচন করুন --");
-  className.disabled=true;
-  document.getElementById("classHelp").textContent="প্রথমে সাল নির্বাচন করুন";
-  document.getElementById("roll").value="";
+function fillMemberSelectors(){
+  const orderedMembers=members.slice().sort(memberSort);
+  const opts=orderedMembers.map((m,i)=>`<option value="${esc(m.id)}">${Number(m.serial_no||i+1).toLocaleString('bn-BD')}. ${esc(m.name)}</option>`).join('');
+  q('personalMember').innerHTML='<option value="">-- সদস্য নির্বাচন করুন --</option>'+opts;
+  q('payMember').innerHTML='<option value="">-- সদস্য নির্বাচন করুন --</option>'+opts;
+  const manageMember=q('paymentManageMember');
+  if(manageMember){const prev=manageMember.value; manageMember.innerHTML='<option value="">-- সদস্য নির্বাচন করুন --</option>'+opts; if(orderedMembers.some(m=>String(m.id)===String(prev))) manageMember.value=prev;}
 }
-function resetClassWise(clearYear=true){
-  if(clearYear) classYear.value="";
-  fillSelect(classWiseExam,examOptions,"-- পরীক্ষা নির্বাচন করুন --");
-  classWiseExam.value="";
-  fillSelect(classWiseName,[],"-- আগে সাল নির্বাচন করুন --");
-  classWiseName.disabled=true;
-  classWiseResult.classList.add("hidden");
+function selectedYears(year){
+  if(year==='all'||!year) return years;
+  return [String(year)];
 }
-
-yearSelect.addEventListener("change",loadPersonalClasses);
-classYear.addEventListener("change",()=>{
-  const y=classYear.value;
-  fillSelect(classWiseExam,examOptions,"-- পরীক্ষা নির্বাচন করুন --");
-  const classes=y?getClasses(y):[];
-  fillSelect(classWiseName,classes,y?"-- শ্রেণি নির্বাচন করুন --":"-- আগে সাল নির্বাচন করুন --");
-  classWiseName.disabled=classes.length===0;
-  classWiseResult.classList.add("hidden");
-});
-
-classWiseExam.addEventListener("change",()=>{
-  classWiseResult.classList.add("hidden");
-});
-
-classWiseName.addEventListener("change",()=>{
-  classWiseResult.classList.add("hidden");
-});
-
-function showPersonalResult(s){
-  currentPersonalStudent = s;
-  const rows=(s.subjects||[]).map((x,i)=>`<tr><td>${bnNum(i+1)}</td><td>${esc(x.name)}</td><td>${x.marks==='*'?'—':bnNum(x.marks)}</td></tr>`).join("");
-  const pos=typeof s.rank === "number" ? bnNum(s.rank) : esc(s.rank || "—");
-  const absent=s.grade==='অনুপস্থিত' || !(s.subjects||[]).some(x=>typeof x.marks==='number');
-  const status=absent ? '<span class="fail">অনুপস্থিত / অসম্পূর্ণ</span>' : (s.grade==='F' ? '<span class="fail">ফেল</span>' : '<span class="pass">উত্তীর্ণ</span>');
-  const total=s.total==null?'—':bnNum(s.total);
-  const avg=s.average==null?'—':bnNum(Number(s.average).toFixed(2));
-  const point=s.point==null?'—':bnNum(Number(s.point).toFixed(2));
-  resultArea.innerHTML=`
-    <div class="result-head"><img src="logo.jpg" alt="মাদ্রাসার লোগো"><div><h2>দারুন নাজাত আইডিয়াল মাদরাসা</h2><p>শিক্ষাবর্ষ: ${bnNum(s.year || "2026")} — ${esc(s.examBn || s.exam)} — ${esc(s.classBn || s.className)}</p></div></div>
-    <div class="student-info">
-      <div class="info-box"><small>পরীক্ষার্থীর নাম</small><strong>${esc(s.name)}</strong></div>
-      <div class="info-box"><small>শ্রেণি</small><strong>${esc(s.classBn || s.className)}</strong></div>
-      <div class="info-box"><small>রোল নম্বর</small><strong>${bnNum(s.roll)}</strong></div>
-    </div>
-    <div class="table-wrap"><table class="result-table">
-      <thead><tr><th>ক্রম</th><th>বিষয়</th><th>নম্বর</th></tr></thead><tbody>${rows}</tbody>
-    </table></div>
-    <div class="summary">
-      <div class="summary-box"><span>সর্বমোট নম্বর</span><strong>${total}</strong></div>
-      <div class="summary-box"><span>গড়</span><strong>${avg}</strong></div>
-      <div class="summary-box"><span>পয়েন্ট</span><strong>${point}</strong></div>
-      <div class="summary-box"><span>অবস্থান</span><strong>${pos}</strong></div>
-    </div>
-    <div class="result-status">গ্রেড: <b>${esc(s.grade||'—')}</b> &nbsp; | &nbsp; ফলাফল: ${status}</div>
-    <div class="print-row"><button class="print-btn" onclick="printResultArea()">🖨 ফলাফল প্রিন্ট / PDF</button></div>`;
-  resultArea.classList.remove("hidden");
-  resultArea.scrollIntoView({behavior:"smooth",block:"start"});
+// Excel-এর বার্ষিক হিসাব অনুযায়ী প্রতিটি সদস্যের প্রত্যেক হিসাব বছরে
+// ১২ মাস × ৳৫০০ = ৳৬,০০০ পাওনা। বকেয়া কখনো Database-এর কোনো
+// পুরোনো/ফাঁকা due ফিল্ড থেকে নেওয়া হবে না; প্রকৃত মাসিক জমা থেকেই হিসাব হবে।
+function normalizeYear(v){
+  return String(v ?? '').trim();
 }
 
-form.addEventListener("submit",e=>{
-  e.preventDefault();
-  resultArea.classList.add("hidden"); message.className="message hidden";
-  const y=yearSelect.value, ev=exam.value, cv=className.value, roll=document.getElementById("roll").value.trim();
-  if(!y||!ev||!cv||!roll){message.textContent="অনুগ্রহ করে সাল, পরীক্ষা, শ্রেণি ও রোল নম্বর পূরণ করুন।";message.className="message error";return;}
-  const s=students.find(x=>String(x.year||"")===y&&x.exam===ev&&x.className===cv&&String(x.roll)===roll);
-  if(!s){message.textContent="দুঃখিত! এই তথ্য অনুযায়ী কোনো ফলাফল পাওয়া যায়নি।";message.className="message error";return;}
-  message.textContent="ফলাফল পাওয়া গেছে।";message.className="message success";showPersonalResult(s);
-});
+// ২০২৫ সালে কোনো সদস্যের মাসিক জমা হয়নি। Database-এ থাকা পুরোনো/ভুল ২০২৫
+// payment record যেন কোনো হিসাব বা প্রদর্শনীতে জমা হিসেবে না আসে, তাই শুধু
+// হিসাবের স্তরে ২০২৫ সালের payment বাদ দেওয়া হচ্ছে; Database-এর কোনো data
+// পরিবর্তন বা delete করা হচ্ছে না।
+function isCountablePayment(p){
+  return true;
+}
+function memberPaid(m,year){
+  const target = year==='all'||!year ? null : normalizeYear(year);
+  return payments
+    .filter(p=>isCountablePayment(p) && String(p.member_id)===String(m.id) && (target===null || normalizeYear(p.year)===target))
+    .reduce((s,p)=>s+Number(p.paid_amount||0),0);
+}
+function memberRequired(m,year){
+  return selectedYears(year).length * YEARLY_REQUIRED();
+}
+function memberDue(m,year){
+  const paid=memberPaid(m,year);
+  return Math.max(memberRequired(m,year)-paid,0);
+}
+function totalPaid(year){
+  const target=year==='all'||!year?null:normalizeYear(year);
+  return payments.filter(p=>isCountablePayment(p) && (target===null||normalizeYear(p.year)===target))
+    .reduce((s,p)=>s+Number(p.paid_amount||0),0);
+}
+function totalRequired(year){return members.length*selectedYears(year).length*YEARLY_REQUIRED()}
+function totalDue(year){return Math.max(totalRequired(year)-totalPaid(year),0)}
+function totalExpense(year){return expenses.filter(e=>!year||year==='all'||Number(normalizeYear(e.year))===Number(normalizeYear(year))).reduce((s,e)=>s+Number(e.amount||0),0)}
+function totalProfit(year){return profits.filter(p=>!year||year==='all'||Number(normalizeYear(p.year))===Number(normalizeYear(year))).reduce((s,p)=>s+Number(p.total_profit||0),0)}
+function totalAssets(year){return assets.filter(a=>!year||year==='all'||Number(normalizeYear(a.year))===Number(normalizeYear(year))).reduce((s,a)=>s+Number(a.amount||0),0)}
+function remainingFund(){return totalPaid('all')+totalProfit('all')-totalExpense('all')}
+function remainingDividend(){return Math.max(totalProfit('all')-totalExpense('all'),0)}
+function memberDividend(m){
+  const total=totalPaid('all'),remaining=remainingDividend();
+  if(total<=0||remaining<=0)return 0;
+  return remaining*(memberPaid(m,'all')/total);
+}
+function isDividendPublic(memberId){
+  return !!dividendVisibility[String(memberId)];
+}
+function canViewDividend(memberId){
+  return !!adminUser || isDividendPublic(memberId);
+}
+async function loadDividendVisibility(){
+  dividendVisibility={};
+  if(!sb)return;
+  const {data,error}=await sb.from('member_dividend_visibility').select('member_id,is_public');
+  if(error){console.warn('member_dividend_visibility load:',error.message);return;}
+  (data||[]).forEach(row=>{dividendVisibility[String(row.member_id)]=!!row.is_public;});
+}
+async function setDividendVisibility(memberId,isPublic){if(!mainAdminReady){showMessage('লভ্যাংশের Public/Hide পরিবর্তনের জন্য Main Supabase Admin account সেটআপ করতে হবে।');return false}
+  const {error}=await sb.from('member_dividend_visibility').upsert(
+    {member_id:memberId,is_public:!!isPublic,updated_at:new Date().toISOString()},
+    {onConflict:'member_id'}
+  );
+  if(error){showMessage('লভ্যাংশের Public/Hidden সংরক্ষণ করা যায়নি। আগে member_dividend_visibility টেবিল ও RLS সেটিংস তৈরি করুন।',false);return false;}
+  dividendVisibility[String(memberId)]=!!isPublic;
+  renderAdminData();
+  showMessage(isPublic?'লভ্যাংশ Public করা হয়েছে ✓':'লভ্যাংশ Hidden করা হয়েছে ✓',true);
+  return true;
+}
+async function setAllDividendVisibility(isPublic){if(!mainAdminReady){showMessage('লভ্যাংশের Public/Hide পরিবর্তনের জন্য Main Supabase Admin account সেটআপ করতে হবে।');return}
+  const ids=members.map(m=>m.id);
+  if(!ids.length){showMessage('কোনো সক্রিয় সদস্য পাওয়া যায়নি।',false);return;}
+  const rows=ids.map(id=>({member_id:id,is_public:!!isPublic,updated_at:new Date().toISOString()}));
+  const {error}=await sb.from('member_dividend_visibility').upsert(rows,{onConflict:'member_id'});
+  if(error){showMessage('সব সদস্যের লভ্যাংশ Public/Hidden করা যায়নি। আগে member_dividend_visibility টেবিল ও RLS সেটিংস তৈরি করুন।',false);return;}
+  ids.forEach(id=>{dividendVisibility[String(id)]=!!isPublic;});
+  renderAdminData();
+  showMessage(isPublic?'সকল সদস্যের লভ্যাংশ Public করা হয়েছে ✓':'সকল সদস্যের লভ্যাংশ Hide করা হয়েছে ✓',true);
+}
+async function toggleDividendVisibility(memberId){
+  await setDividendVisibility(memberId,!isDividendPublic(memberId));
+}
+function currentFund(){return remainingFund()-totalAssets('all')}
+function downloadButton(kind){return `<div class="result-download"><button class="download-btn" type="button" onclick="${kind==='personal'?'downloadPersonalReport()':'downloadAllMembersReport()'}">⬇️ বিস্তারিত হিসাব ডাউনলোড</button></div>`}
 
-form.addEventListener("reset",()=>setTimeout(()=>{
-  resetPersonal(true); message.className="message hidden"; resultArea.classList.add("hidden");
-},0));
-
-function resetListForm(){
-  listType.value="";
-  listYear.value="";
-  fillSelect(listExam,examOptions,"-- পরীক্ষা নির্বাচন করুন --");
-  listExam.value="";
-  aplusMeta.innerHTML="";
-  aplusResult.innerHTML="";
-  aplusResult.classList.add("hidden");
-  listPrintRow.classList.add("hidden");
+async function load(){
+  if(!sb){q('totalResult').innerHTML='<div class="empty-state">Supabase configuration পাওয়া যায়নি।</div>';return;}
+  q('totalResult').innerHTML='<div class="loading">ডাটা লোড হচ্ছে...</div>';
+  // Supabase-এর একবারের select সাধারণত সর্বোচ্চ ১০০০টি row ফেরত দিতে পারে।
+  // ২০২১–২০২৪ সালের payments মোট ১৬৩৬টি হওয়ায় একবারে নিলে ২০২৩/২০২৪-এর
+  // পরের রেকর্ডগুলো বাদ পড়ে যাচ্ছিল। তাই শুধু payments-এর জন্য সব row page করে নেওয়া হচ্ছে।
+  const fetchAllPayments=async()=>{
+    const rows=[];
+    const pageSize=1000;
+    for(let from=0;;from+=pageSize){
+      const {data,error}=await sb.from('payments').select('*').order('year').order('month').range(from,from+pageSize-1);
+      if(error)return {data:null,error};
+      rows.push(...(data||[]));
+      if(!data||data.length<pageSize)break;
+    }
+    return {data:rows,error:null};
+  };
+  const [m,p,pr,e,a,n]=await Promise.all([
+    sb.from('members').select('*').eq('status','active').order('serial_no',{ascending:true,nullsFirst:false}).order('created_at'),
+    fetchAllPayments(),
+    sb.from('profits').select('*').order('year'),
+    sb.from('expenses').select('*').order('date',{ascending:false}),
+    sb.from('assets').select('*').eq('status','active').order('date',{ascending:false}),
+    sb.from('notices').select('*').eq('status','published').order('publish_date',{ascending:false})
+  ]);
+  const errors=[m,p,pr,e,a,n].filter(x=>x.error);
+  if(errors.length){console.error(...errors.map(x=>x.error));q('totalResult').innerHTML='<div class="empty-state">ডাটা লোড করতে সমস্যা হয়েছে। Supabase/RLS সেটিংস পরীক্ষা করুন।</div>';return;}
+  members=m.data||[];payments=p.data||[];profits=pr.data||[];expenses=e.data||[];assets=a.data||[];notices=n.data||[];
+  detectMonthlyRequired();
+  await loadDividendVisibility();
+  fillYearSelectors();fillMemberSelectors();
+  renderTotal();renderPersonalTotal();renderProfitExpenseDetails();renderFund();renderNotices();renderAllMembersPreview();
+  renderPersonalTotal();
 }
 
-function showListResult(){
-  const type=listType.value, y=listYear.value, ev=listExam.value;
-  aplusMeta.innerHTML="";
-  aplusResult.innerHTML="";
-  aplusResult.classList.add("hidden");
-  listPrintRow.classList.add("hidden");
-  if(!type||!y||!ev) return;
-
-  const base=students.filter(s=>String(s.year||"")===String(y)&&s.exam===ev);
-
-  // A+ ও মেধা—দুই তালিকাতেই শ্রেণির নির্দিষ্ট ক্রম:
-  // নার্সারি → প্রথম → দ্বিতীয় → তৃতীয় → চতুর্থ → পঞ্চম → ষষ্ঠ → হিফজ
-  const classOrder=["Narsari","Class-1","Class-2","Class-3","Class-4","Class-5","Class-6","Hifz"];
-  const classRank=new Map(classOrder.map((c,i)=>[c,i]));
-
-  // Excel/পুরোনো ডাটায় অবস্থান কখনো 1, কখনো "১ম"/"২য়"/"৩য়" হিসেবে থাকে।
-  // তালিকা তৈরির সময় সব ফরম্যাটকে একই সংখ্যায় রূপান্তর করা হয়।
-  function rankNumber(v){
-    if(typeof v==="number" && isFinite(v)) return v;
-    const s=String(v ?? "").trim().replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));
-    const m=s.match(/\d+/);
-    return m ? Number(m[0]) : null;
-  }
-
-  function sortWithinClass(a,b){
-    const ra=rankNumber(a.rank), rb=rankNumber(b.rank);
-    if(ra!==null && rb!==null && ra!==rb) return ra-rb;
-    if(ra!==null && rb===null) return -1;
-    if(ra===null && rb!==null) return 1;
-
-    const aa=Number(a.average)||0, ab=Number(b.average)||0;
-    if(ab!==aa) return ab-aa;
-    const ta=Number(a.total)||0, tb=Number(b.total)||0;
-    if(tb!==ta) return tb-ta;
-    return String(a.name||"").localeCompare(String(b.name||""),'bn');
-  }
-
-  function sortByClassThenRank(a,b){
-    const ca=classRank.has(a.className)?classRank.get(a.className):999;
-    const cb=classRank.has(b.className)?classRank.get(b.className):999;
-    if(ca!==cb) return ca-cb;
-    return sortWithinClass(a,b);
-  }
-
-  let list=[];
-  if(type==="aplus"){
-    // A+ পাওয়া সব শিক্ষার্থী থাকবে; অবস্থান অনুযায়ী নিজ নিজ শ্রেণির মধ্যে সাজানো হবে।
-    list=base
-      .filter(s=>String(s.grade||"").trim().toUpperCase()==="A+")
-      .sort(sortByClassThenRank);
-  }else{
-    // মেধা তালিকায় কেবল ১ম, ২য় ও ৩য় স্থান (প্রতি শ্রেণিতে) থাকবে।
-    list=base
-      .filter(s=>{
-        if(s.grade==="অনুপস্থিত") return false;
-        const r=rankNumber(s.rank);
-        return r!==null && r>=1 && r<=3;
-      })
-      .sort(sortByClassThenRank);
-  }
-
-  const title=type==="aplus" ? "A+ প্রাপ্তদের তালিকা" : "মেধা তালিকা";
-  aplusMeta.innerHTML=`
-    <span>${title}: <b>${bnNum(list.length)}</b> জন</span>
-    <span>শিক্ষাবর্ষ: <b>${bnNum(y)}</b></span>
-    <span>পরীক্ষা: <b>${esc((base[0]?.examBn)||ev)}</b></span>`;
-
-  if(!list.length){
-    aplusResult.innerHTML=`<div class="classwise-empty">দুঃখিত! নির্বাচিত সাল ও পরীক্ষার জন্য কোনো ${type==="aplus"?"A+ প্রাপ্ত পরীক্ষার্থীর":"মেধা তালিকার"} তথ্য পাওয়া যায়নি।</div>`;
-    aplusResult.classList.remove("hidden");
-    return;
-  }
-
-  let rows;
-  if(type==="aplus"){
-    rows=list.map((s,i)=>`<tr>
-      <td><strong>${bnNum(i+1)}</strong></td>
-      <td class="aplus-student-name">${esc(s.name||"—")}</td>
-      <td>${esc(s.classBn||s.className||"—")}</td>
-      <td>${s.total==null?"—":bnNum(s.total)}</td>
-      <td>${s.average==null?"—":bnNum(Number(s.average).toFixed(2))}</td>
-      <td>${s.point==null?"—":bnNum(Number(s.point).toFixed(2))}</td>
-      <td><strong class="aplus-grade">${esc(s.grade||"A+")}</strong></td>
-      <td>${typeof s.rank==="number" ? bnNum(s.rank) : esc(s.rank||"—")}</td>
-    </tr>`).join("");
-  }else{
-    rows=list.map((s,i)=>`<tr>
-      <td><strong>${bnNum(i+1)}</strong></td>
-      <td class="aplus-student-name">${esc(s.name||"—")}</td>
-      <td>${esc(s.classBn||s.className||"—")}</td>
-      <td>${s.total==null?"—":bnNum(s.total)}</td>
-      <td>${s.average==null?"—":bnNum(Number(s.average).toFixed(2))}</td>
-      <td>${s.point==null?"—":bnNum(Number(s.point).toFixed(2))}</td>
-      <td><strong class="aplus-grade">${esc(s.grade||"—")}</strong></td>
-      <td>${typeof s.rank==="number" ? bnNum(s.rank) : esc(s.rank||"—")}</td>
-    </tr>`).join("");
-  }
-
-  const headers=["ক্রমিক নং","পরীক্ষার্থীর নাম","শ্রেণী","মোট নম্বর","গড়","পয়েন্ট","গ্রেড","অবস্থান"];
-  aplusResult.innerHTML=`<table class="aplus-table">
-    <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-  aplusResult.classList.remove("hidden");
-  listPrintRow.classList.remove("hidden");
-  aplusPanel.scrollIntoView({behavior:"smooth",block:"start"});
-}
-
-function showClassWiseResult(){
-  const y=classYear.value, ev=classWiseExam.value, c=classWiseName.value;
-  classWiseResult.classList.add("hidden");
-  if(!y||!ev||!c){return;}
-
-  const list=students.filter(s=>String(s.year||"")===y&&s.exam===ev&&s.className===c);
-  if(!list.length){
-    classWiseResult.innerHTML='<div class="classwise-empty">দুঃখিত! এই সাল ও শ্রেণির কোনো ফলাফল পাওয়া যায়নি।</div>';
-    classWiseResult.classList.remove("hidden");
-    return;
-  }
-
-  const f=list[0];
-
-  // এই শ্রেণির সব শিক্ষার্থীর subject list থেকে কলাম তৈরি হবে।
-  const subjectNames=[];
-  list.forEach(s=>(s.subjects||[]).forEach(x=>{
-    const name=String(x.name||"").trim();
-    if(name && !subjectNames.includes(name)) subjectNames.push(name);
-  }));
-
-  const headers=["ক্রম","শিক্ষার্থীর নাম",...subjectNames,"মোট","গড়","গ্রেড","অবস্থান"];
-
-  const rows=list.map((s,i)=>{
-    const marks={};
-    (s.subjects||[]).forEach(x=>{
-      const n=String(x.name||"").trim();
-      if(n) marks[n]=x.marks;
-    });
-
-    const subjectCells=subjectNames.map(n=>{
-      const v=marks[n];
-      return `<td>${v==null||v===""||v==="*"?"—":bnNum(v)}</td>`;
-    }).join("");
-
-    return `<tr>
-      <td>${bnNum(i+1)}</td>
-      <td class="student-name">${esc(s.name)}</td>
-      ${subjectCells}
-      <td>${s.total==null?"—":bnNum(s.total)}</td>
-      <td>${s.average==null?"—":bnNum(Number(s.average).toFixed(2))}</td>
-      <td>${esc(s.grade||"—")}</td>
-      <td>${typeof s.rank==="number"?bnNum(s.rank):esc(s.rank||"—")}</td>
-    </tr>`;
-  }).join("");
-
-  const headHtml=`
-    <div class="classwise-head">
-      <img src="logo.jpg" alt="মাদ্রাসার লোগো">
-      <div>
-        <h2>${esc(f.classBn||f.className)} — শ্রেণিভিত্তিক ফলাফল</h2>
-        <p>শিক্ষাবর্ষ: ${bnNum(y)} — ${esc(f.examBn||f.exam)}</p>
-      </div>
-    </div>`;
-
-  const tableHtml=`
-    <div class="table-wrap classwise-print-table-wrap">
-      <table class="result-table classwise-table">
-        <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-
-  classWiseResult.innerHTML=`
-    ${headHtml}
-    ${tableHtml}
-    <div class="print-row">
-      <button class="print-btn" onclick="printClassWiseResult()">🖨 ফলাফল প্রিন্ট / PDF</button>
-    </div>`;
-
-  classWiseResult.classList.remove("hidden");
-  classWiseResult.scrollIntoView({behavior:"smooth",block:"start"});
-}
-
-function buildPersonalPrintSheet(s){
-  const rows=(s.subjects||[]).map(x=>{
-    const marks=x.marks==='*' ? '—' : bnNum(x.marks);
-    return `<tr><td class="subject-name">${esc(x.name||'—')}</td><td>${marks}</td></tr>`;
-  }).join("");
-  const pos=typeof s.rank === "number" ? bnNum(s.rank) : esc(s.rank || "—");
-  const absent=s.grade==='অনুপস্থিত' || !(s.subjects||[]).some(x=>typeof x.marks==='number');
-  const status=absent ? 'অনুপস্থিত / অসম্পূর্ণ' : (s.grade==='F' ? 'ফেল' : 'উত্তীর্ণ');
-  const grade=esc(s.grade||'—');
-  const total=s.total==null?'—':bnNum(s.total);
-  const avg=s.average==null?'—':bnNum(Number(s.average).toFixed(2));
-  const point=s.point==null?'—':bnNum(Number(s.point).toFixed(2));
-  return `
-  <div class="print-sheet personal-print-sheet">
-    <div class="print-decor top"></div>
-    <div class="print-header">
-      <div class="print-logo-wrap"><img src="logo.jpg" alt="মাদ্রাসার লোগো"></div>
-      <div class="print-title">
-        <h1>দারুন নাজাত আইডিয়াল মাদরাসা</h1>
-        <h2>পরীক্ষার ফলাফল</h2>
-        <p>আবুতোরাব, মিরসরাই, চট্টগ্রাম</p>
-        <p>শিক্ষাবর্ষ: ${bnNum(s.year||'2026')} — ${esc(s.examBn||s.exam||'')}</p>
-      </div>
-      <div class="print-seal">RESULT</div>
-    </div>
-    <div class="print-student-title">শিক্ষার্থীর ফলাফল বিবরণী</div>
-    <div class="print-meta-row">
-      <div><span>পরীক্ষার্থীর নাম</span><strong>${esc(s.name||'—')}</strong></div>
-      <div><span>শ্রেণি</span><strong>${esc(s.classBn||s.className||'—')}</strong></div>
-      <div><span>রোল নম্বর</span><strong>${bnNum(s.roll)}</strong></div>
-      <div><span>অবস্থান</span><strong>${pos}</strong></div>
-    </div>
-    <div class="print-body-grid">
-      <div class="print-subject-area">
-        <div class="print-section-label">বিষয়ভিত্তিক ফলাফল</div>
-        <table class="result-table print-result-table">
-          <thead><tr><th>বিষয়</th><th>নম্বর</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-      <div class="grade-chart">
-        <div class="grade-chart-title">ফলাফলের সারাংশ</div>
-        <div class="grade-highlight"><span>গ্রেড</span><b>${grade}</b></div>
-        <div class="mini-stat"><span>মোট</span><strong>${total}</strong></div>
-        <div class="mini-stat"><span>গড়</span><strong>${avg}</strong></div>
-        <div class="mini-stat"><span>পয়েন্ট</span><strong>${point}</strong></div>
-      </div>
-    </div>
-    <div class="print-status ${s.grade==='F'||absent?'bad':'good'}">ফলাফল: <b>${status}</b></div>
-    <div class="print-footer-note">দারুন নাজাত আইডিয়াল মাদরাসা — ফলাফল প্রকাশনা</div>
-    <div class="print-signatures"><span>শ্রেণি শিক্ষক</span><span>পরীক্ষা নিয়ন্ত্রক</span><span>অধ্যক্ষ</span></div>
-    <div class="print-decor bottom"></div>
+function renderPersonalTotal(){
+  const deposit=totalPaid('all'),profit=totalProfit('all'),expense=totalExpense('all'),remaining=deposit+profit-expense;
+  q('personalTotalResult').innerHTML=`<div class="report-title"><h3>সংস্থার মোট হিসাব</h3><p>প্রতিষ্ঠার শুরু থেকে সকল বছরের সমন্বিত হিসাব</p></div>
+  <div class="summary-grid total-summary">
+    <article><span>মোট জমা</span><strong>${money(deposit)}</strong></article>
+    <article><span>মোট লভ্যাংশ</span><strong>${money(profit)}</strong></article>
+    <article><span>মোট বিবিধ খরচ</span><strong>${money(expense)}</strong></article>
+    <article class="highlight"><span>অবশিষ্ট তহবিল</span><strong>${money(remaining)}</strong></article>
   </div>`;
 }
 
-function openPrintWindow(htmlContent,title,orientation="portrait"){
-  const win=window.open("", "_blank");
-  if(!win){
-    // Popup blocked হলে স্বাভাবিক print fallback।
-    window.print();
+function renderPersonal(){
+  const y=q('personalYear').value,id=q('personalMember').value;
+  q('personalMessage').className='message hidden';
+  if(!y||!id){q('personalMessage').textContent='সাল ও সদস্য নির্বাচন করুন।';q('personalMessage').className='message error';return;}
+  const m=members.find(x=>String(x.id)===String(id));if(!m)return;
+  const label=y==='all'?'সকল বছরের মোট হিসাব':`${y} সালের হিসাব`;
+  const detailYears=selectedYears(y);
+  const detailRows=detailYears.flatMap(yr=>months.map((monthName,idx)=>{
+    const paid=memberMonthPaid(m,yr,idx+1);
+    const due=Math.max(MONTHLY_REQUIRED-paid,0);
+    return `<tr><td>${esc(yr)}</td><td>${monthName}</td><td>${paid>0?money(paid):'৳ ০'}</td><td>${money(due)}</td></tr>`;
+  })).join('');
+  let allYearsSummary='';
+  if(y==='all'){
+    const dividend=memberDividend(m);
+    const visible=canViewDividend(m.id);
+    allYearsSummary=`<div class="detail-block member-total-detail"><div class="detail-heading"><span>📊</span><h3>সকল বছরের মোট হিসাব</h3></div><div class="summary-grid personal-total-summary">
+      <article><span>মোট পরিশোধ</span><strong>${money(memberPaid(m,'all'))}</strong></article>
+      <article><span>মোট বাকি</span><strong>${money(memberDue(m,'all'))}</strong></article>
+      <article><span>মোট লভ্যাংশ</span><strong>${visible?money(dividend):'গোপন'}</strong></article>
+      <article class="highlight"><span>সর্বমোট প্রাপ্য</span><strong>${money(memberPaid(m,'all')+(visible?dividend:0))}</strong></article>
+    </div></div>`;
+  }else{
+    allYearsSummary=`<div class="member-summary compact-summary"><div>মোট পরিশোধ<strong>${money(memberPaid(m,y))}</strong></div><div>মোট বাকি<strong>${money(memberDue(m,y))}</strong></div></div>`;
+  }
+  q('personalResult').innerHTML=`<div class="report-title"><h3>${esc(m.name)}</h3><p>${label}</p></div>
+    <div class="print-only personal-print-details"><h4>মাসভিত্তিক বিস্তারিত হিসাব</h4><div class="table-wrap"><table><thead><tr><th>সাল</th><th>মাস</th><th>পরিশোধ</th><th>বাকি</th></tr></thead><tbody>${detailRows}</tbody></table></div></div>
+    ${allYearsSummary}
+    ${downloadButton('personal')}`;
+  q('personalResult').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function memberMonthPaid(m,y,month){
+  return payments.filter(p=>isCountablePayment(p)&&String(p.member_id)===String(m.id)&&Number(normalizeYear(p.year))===Number(normalizeYear(y))&&Number(p.month)===month).reduce((s,p)=>s+Number(p.paid_amount||0),0);
+}
+function paidCell(m,y,month){
+  const amount=memberMonthPaid(m,y,month);
+  return amount>0?Number(amount).toLocaleString('bn-BD'):'';
+}
+function renderAllMembers(){
+  const y=q('allMembersYear').value||'all';
+  if(!y){q('allMembersResult').innerHTML='<div class="empty-state">একটি বছর নির্বাচন করে হিসাব দেখুন।</div>';return;}
+  if(y==='all'){
+    let h=`<div class="report-title"><h3>সকল বছরের সকল সদস্যদের হিসাব</h3><p>যে মাসে টাকা দেওয়া হয়েছে শুধু সেই টাকাই দেখানো হয়েছে</p></div><div class="table-wrap"><table class="member-report-table"><thead><tr><th>ক্রমিক</th><th class="name nowrap">সদস্যের নাম</th>${years.map(v=>`<th>${esc(v)}</th>`).join('')}<th>মোট পরিশোধ</th><th>মোট বাকি</th></tr></thead><tbody>`;
+    members.forEach((m,i)=>{h+=`<tr><td>${Number(m.serial_no||i+1).toLocaleString('bn-BD')}</td><td class="name nowrap">${esc(m.name)}</td>`+years.map(v=>`<td>${memberPaid(m,v)>0?Number(memberPaid(m,v)).toLocaleString('bn-BD'):''}</td>`).join('')+`<td>${Number(memberPaid(m,'all')).toLocaleString('bn-BD')}</td><td>${Number(memberDue(m,'all')).toLocaleString('bn-BD')}</td></tr>`});
+    h+=`</tbody><tfoot><tr class="total-row"><td colspan="2">সর্বমোট</td>${years.map(v=>`<td>${totalPaid(v)>0?Number(totalPaid(v)).toLocaleString('bn-BD'):''}</td>`).join('')}<td>${Number(totalPaid('all')).toLocaleString('bn-BD')}</td><td>${Number(totalDue('all')).toLocaleString('bn-BD')}</td></tr></tfoot></table></div>${downloadButton('allMembers')}`;
+    q('allMembersResult').innerHTML=h;return;
+  }
+  let h=`<div class="report-title"><h3>${esc(y)} সালের সকল সদস্যদের হিসাব</h3><p>প্রতি মাসে শুধু পরিশোধের পরিমাণ দেখানো হয়েছে</p></div><div class="table-wrap"><table class="member-report-table"><thead><tr><th>ক্রমিক</th><th class="name nowrap">সদস্যের নাম</th>${months.map(m=>`<th>${m}</th>`).join('')}<th>মোট পরিশোধ</th><th>মোট বাকি</th></tr></thead><tbody>`;
+  members.forEach((m,i)=>{h+=`<tr><td>${Number(m.serial_no||i+1).toLocaleString('bn-BD')}</td><td class="name nowrap">${esc(m.name)}</td>`+months.map((_,mi)=>`<td>${paidCell(m,y,mi+1)}</td>`).join('')+`<td>${Number(memberPaid(m,y)).toLocaleString('bn-BD')}</td><td>${Number(memberDue(m,y)).toLocaleString('bn-BD')}</td></tr>`});
+  h+=`</tbody><tfoot><tr class="total-row"><td colspan="2">সর্বমোট</td>${months.map((_,mi)=>{const x=payments.filter(p=>isCountablePayment(p)&&Number(normalizeYear(p.year))===Number(normalizeYear(y))&&Number(p.month)===mi+1).reduce((s,p)=>s+Number(p.paid_amount||0),0);return `<td>${x>0?Number(x).toLocaleString('bn-BD'):''}</td>`}).join('')}<td>${Number(totalPaid(y)).toLocaleString('bn-BD')}</td><td>${Number(totalDue(y)).toLocaleString('bn-BD')}</td></tr></tfoot></table></div>
+  <div class="member-summary"><div>মোট পরিশোধ<strong>${money(totalPaid(y))}</strong></div><div>মোট বাকি<strong>${money(totalDue(y))}</strong></div></div>${downloadButton('allMembers')}`;
+  q('allMembersResult').innerHTML=h;
+}
+function renderAllMembersPreview(){
+  const rows=years.map(y=>`<tr><td>${esc(y)}</td><td>${Number(totalPaid(y)).toLocaleString('bn-BD')}</td><td>${Number(totalDue(y)).toLocaleString('bn-BD')}</td></tr>`).join('');
+  q('allMembersResult').innerHTML=`<div class="report-title"><h3>সকল সদস্যদের হিসাব</h3><p>সাল নির্বাচন করে বিস্তারিত হিসাব দেখুন</p></div><div class="table-wrap"><table><thead><tr><th>সাল</th><th>মোট পরিশোধ</th><th>মোট বাকি</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderTotal(){
+  const deposit=totalPaid('all'),profit=totalProfit('all'),expense=totalExpense('all'),remaining=deposit+profit-expense;
+  q('totalResult').innerHTML=`<div class="report-title"><h3>সংস্থার মোট হিসাব</h3><p>প্রতিষ্ঠার শুরু থেকে সকল বছরের সমন্বিত হিসাব</p></div>
+  <div class="summary-grid total-summary">
+    <article><span>মোট জমা</span><strong>${money(deposit)}</strong></article>
+    <article><span>মোট লভ্যাংশ</span><strong>${money(profit)}</strong></article>
+    <article><span>মোট বিবিধ খরচ</span><strong>${money(expense)}</strong></article>
+    <article class="highlight"><span>অবশিষ্ট তহবিল</span><strong>${money(remaining)}</strong></article>
+  </div>`;
+}
+function renderProfitExpenseDetails(){
+  const profitTotal=totalProfit('all'),expenseTotal=totalExpense('all');
+  const profitRows=profits.slice().sort((a,b)=>Number(a.year)-Number(b.year)).map((x,i)=>`<tr><td>${(i+1).toLocaleString('bn-BD')}</td><td>${esc(x.year)}</td><td class="detail-text">${esc(x.description||'-')}</td><td>${money(x.total_profit)}</td></tr>`).join('');
+  const expenseRows=expenses.slice().sort((a,b)=>Number(a.year||0)-Number(b.year||0)).map((x,i)=>`<tr><td>${(i+1).toLocaleString('bn-BD')}</td><td>${esc(x.year)}</td><td class="detail-text">${esc(x.description||'-')}</td><td>${money(x.amount)}</td></tr>`).join('');
+  q('profitExpenseDetailsResult').innerHTML=`
+    <div class="detail-block profit-detail"><div class="detail-heading"><span>📈</span><h3>লভ্যাংশের বিস্তারিত বিবরণ</h3></div><div class="table-wrap"><table class="detail-table"><thead><tr><th>ক্রমিক</th><th>সাল</th><th class="detail-text">বিবরণ</th><th>পরিমাণ</th></tr></thead><tbody>${profitRows||'<tr><td colspan="4">কোনো লভ্যাংশের তথ্য নেই।</td></tr>'}</tbody><tfoot><tr class="total-row"><td colspan="3">মোট লভ্যাংশ</td><td>${money(profitTotal)}</td></tr></tfoot></table></div></div>
+    <div class="detail-block expense-detail"><div class="detail-heading"><span>🧾</span><h3>খরচের বিস্তারিত বিবরণ</h3></div><div class="table-wrap"><table class="detail-table"><thead><tr><th>ক্রমিক</th><th>সাল</th><th class="detail-text">বিবরণ</th><th>পরিমাণ</th></tr></thead><tbody>${expenseRows||'<tr><td colspan="4">কোনো খরচের তথ্য নেই।</td></tr>'}</tbody><tfoot><tr class="total-row"><td colspan="3">মোট খরচ</td><td>${money(expenseTotal)}</td></tr></tfoot></table></div></div>
+    <div class="detail-block dividend-summary-detail"><div class="detail-heading"><span>💰</span><h3>লভ্যাংশের সংক্ষিপ্ত হিসাব</h3></div><div class="table-wrap"><table class="detail-table fund-summary-table"><tbody>
+      <tr><th>মোট লভ্যাংশ</th><td>${money(profitTotal)}</td></tr>
+      <tr><th>মোট খরচ</th><td>${money(expenseTotal)}</td></tr>
+      <tr class="highlight-row"><th>অবশিষ্ট লভ্যাংশ</th><td><b>${money(remainingDividend())}</b></td></tr>
+    </tbody></table></div></div>
+    `;
+}
+function renderFund(){
+  const deposit=totalPaid('all'),profit=totalProfit('all'),expense=totalExpense('all'),allocated=totalAssets('all'),remaining=currentFund();
+  const body=assets.map((a,i)=>`<tr><td>${(i+1).toLocaleString('bn-BD')}</td><td>${esc(a.year)}</td><td>${esc(a.category)}</td><td class="detail-text">${esc(a.description)}</td><td>${money(a.amount)}</td><td>${esc(a.date||'')}</td></tr>`).join('');
+  q('fundResult').innerHTML=`<div class="report-title"><h3>তহবিল ব্যবহারের খাতসমূহ</h3><p>যে সকল খাতে তহবিল ব্যবহার করা হয়েছে</p></div>
+  <div class="detail-block fund-detail"><div class="detail-heading"><span>🏦</span><h3>তহবিল ব্যবহারের খাতসমূহ</h3></div><div class="table-wrap"><table class="detail-table"><thead><tr><th>ক্রমিক</th><th>সাল</th><th>খাত</th><th class="detail-text">বিস্তারিত</th><th>পরিমাণ</th><th>তারিখ</th></tr></thead><tbody>${body||'<tr><td colspan="6">এখনও কোনো খাত যোগ করা হয়নি।</td></tr>'}</tbody><tfoot><tr class="total-row"><td colspan="4">বিভিন্ন খাতে ব্যবহার করা মোট</td><td>${money(allocated)}</td><td></td></tr></tfoot></table></div></div>
+  <div class="detail-block fund-summary-detail"><div class="detail-heading"><span>💰</span><h3>তহবিলের সংক্ষিপ্ত হিসাব</h3></div><div class="table-wrap"><table class="detail-table fund-summary-table"><tbody>
+    <tr><th>মোট অবশিষ্ট তহবিল</th><td>${money(remainingFund())}</td></tr><tr><th>বিভিন্ন খাতে ব্যবহার</th><td>${money(allocated)}</td></tr><tr class="highlight-row"><th>বর্তমান অবশিষ্ট তহবিল</th><td><b>${money(currentFund())}</b></td></tr>
+  </tbody></table></div></div>`;
+}
+function renderNotices(){
+  const html=notices.map(n=>`<article class="notice"><h3>${esc(n.title)}</h3><p>${esc(n.description)}</p><small>${esc(n.publish_date||'')}</small></article>`).join('');
+  q('noticeResult').innerHTML=html||'<div class="empty-state">কোনো প্রকাশিত নোটিশ নেই।</div>';
+}
+function showMessage(text,ok=false,target='adminMsg'){const el=q(target);if(!el)return;el.textContent=text;el.className='message '+(ok?'success':'error')}
+function resetForm(id){const f=q(id);if(!f)return;f.reset();const h=f.querySelector('[name=id]');if(h)h.value=''}
+async function saveOrUpdate(table,form,make){if(!mainAdminReady){showMessage('মূল হিসাব সংরক্ষণের জন্য Main Supabase Admin account এখনো সেটআপ হয়নি।');return false}const d=Object.fromEntries(new FormData(form).entries()),id=d.id,row=make(d);const res=id?await sb.from(table).update(row).eq('id',id):await sb.from(table).insert(row);if(res.error){showMessage(res.error.message,false);return false}showMessage('সফলভাবে সংরক্ষণ হয়েছে ✓',true);resetForm(form.id);await load();return true}
+async function saveMember(){await saveOrUpdate('members',q('memberForm'),d=>({name:d.name.trim(),address:d.address?.trim()||null,mobile:d.mobile||null,status:'active'}))}
+async function savePayment(){if(!mainAdminReady){showMessage('মূল হিসাব সংরক্ষণের জন্য Main Supabase Admin account এখনো সেটআপ হয়নি।');return}
+  const f=q('paymentForm'),d=Object.fromEntries(new FormData(f).entries());
+  const startMonth=Number(d.month),monthCount=Math.max(1,Number(d.month_count||1)),totalAmount=Number(d.paid_amount||0),year=Number(d.year);
+  if(!d.id && startMonth+monthCount-1>12){showMessage('নির্বাচিত মাস থেকে যত মাস দিয়েছেন তা একই বছরের ডিসেম্বরের মধ্যে হতে হবে।',false);return}
+  if(d.id){
+    const row={member_id:d.member_id,year,month:startMonth,required_amount:MONTHLY_REQUIRED,paid_amount:totalAmount,payment_date:null};
+    const res=await sb.from('payments').update(row).eq('id',d.id);
+    if(res.error){showMessage(res.error.message,false);return}
+    showMessage('মাসিক জমা সংরক্ষণ হয়েছে ✓',true);resetForm('paymentForm');await load();return;
+  }
+  const monthList=Array.from({length:monthCount},(_,i)=>startMonth+i);
+  const existing=await sb.from('payments').select('id,month,paid_amount').eq('member_id',d.member_id).eq('year',year).in('month',monthList);
+  if(existing.error){showMessage(existing.error.message,false);return}
+  const existingRows=existing.data||[];
+  const paidExisting=existingRows.filter(x=>Number(x.paid_amount||0)>0);
+  if(paidExisting.length){
+    const names=paidExisting.map(x=>months[Number(x.month)-1]).join(', ');
+    showMessage(`এই সদস্যের ${year} সালের ${names} মাসের জমা আগে থেকেই আছে। কোনো তথ্য পরিবর্তন করা হয়নি।`,false);return;
+  }
+  const totalCents=Math.round(totalAmount*100),baseCents=Math.floor(totalCents/monthCount),remainder=totalCents-baseCents*monthCount;
+  const updateRows=[],insertRows=[];
+  monthList.forEach((month,i)=>{
+    const amount=(baseCents+(i===monthCount-1?remainder:0))/100;
+    const found=existingRows.find(x=>Number(x.month)===month);
+    const row={member_id:d.member_id,year,month,required_amount:MONTHLY_REQUIRED,paid_amount:amount,payment_date:null};
+    if(found) updateRows.push({id:found.id,row});
+    else insertRows.push(row);
+  });
+  for(const item of updateRows){
+    const res=await sb.from('payments').update(item.row).eq('id',item.id);
+    if(res.error){showMessage(res.error.message,false);return}
+  }
+  if(insertRows.length){
+    const res=await sb.from('payments').insert(insertRows);
+    if(res.error){showMessage(res.error.message,false);return}
+  }
+  showMessage(`${monthCount} মাসের জমা একসাথে সংরক্ষণ হয়েছে ✓`,true);resetForm('paymentForm');await load();
+}
+async function saveProfit(){if(!mainAdminReady){showMessage('মূল হিসাব সংরক্ষণের জন্য Main Supabase Admin account এখনো সেটআপ হয়নি।');return}const d=Object.fromEntries(new FormData(q('profitForm')).entries());const row={year:+d.year,description:d.description.trim(),total_profit:+d.total_profit};const res=d.id?await sb.from('profits').update(row).eq('id',d.id):await sb.from('profits').upsert(row,{onConflict:'year'});if(res.error){showMessage(res.error.message,false);return}showMessage('লভ্যাংশ সংরক্ষণ হয়েছে ✓',true);resetForm('profitForm');await load()}
+async function saveExpense(){await saveOrUpdate('expenses',q('expenseForm'),d=>({year:+d.year,description:d.description.trim(),amount:+d.amount}))}
+async function saveAsset(){await saveOrUpdate('assets',q('assetForm'),d=>({year:+d.year,date:d.date,category:d.category.trim(),description:d.description.trim(),amount:+d.amount,status:'active'}))}
+async function saveNotice(){await saveOrUpdate('notices',q('noticeForm'),d=>({title:d.title.trim(),description:d.description.trim(),status:'published'}))}
+async function del(table,id){if(!mainAdminReady){showMessage('মূল হিসাব সংরক্ষণের জন্য Main Supabase Admin account এখনো সেটআপ হয়নি।');return}if(!confirm('এই তথ্যটি মুছে ফেলতে চান?'))return;const {error}=await sb.from(table).delete().eq('id',id);if(error){showMessage(error.message,false);return}showMessage('তথ্য মুছে ফেলা হয়েছে ✓',true);await load()}
+function editMember(id){const m=members.find(x=>String(x.id)===String(id));if(!m)return;const f=q('memberForm');f.id.value=m.id;f.name.value=m.name;f.address.value=m.address||'';f.mobile.value=m.mobile||'';openForm('member');f.scrollIntoView({behavior:'smooth',block:'start'})}
+function editPayment(id){const p=payments.find(x=>String(x.id)===String(id));if(!p)return;const f=q('paymentForm');f.id.value=p.id;f.member_id.value=p.member_id;f.year.value=p.year;f.month.value=p.month;if(f.month_count)f.month_count.value=1;f.paid_amount.value=p.paid_amount;openForm('payment');f.scrollIntoView({behavior:'smooth',block:'start'})}
+function editProfit(id){const x=profits.find(x=>String(x.id)===String(id));if(!x)return;const f=q('profitForm');f.id.value=x.id;f.year.value=x.year;f.description.value=x.description||'';f.total_profit.value=x.total_profit;openForm('profit');f.scrollIntoView({behavior:'smooth',block:'start'})}
+function editExpense(id){const x=expenses.find(x=>String(x.id)===String(id));if(!x)return;const f=q('expenseForm');f.id.value=x.id;f.year.value=x.year;f.description.value=x.description;f.amount.value=x.amount;openForm('expense');f.scrollIntoView({behavior:'smooth',block:'start'})}
+function editAsset(id){const x=assets.find(x=>String(x.id)===String(id));if(!x)return;const f=q('assetForm');f.id.value=x.id;f.year.value=x.year;f.date.value=x.date;f.category.value=x.category;f.description.value=x.description;f.amount.value=x.amount;openForm('asset');f.scrollIntoView({behavior:'smooth',block:'start'})}
+function editNotice(id){const x=notices.find(x=>String(x.id)===String(id));if(!x)return;const f=q('noticeForm');f.id.value=x.id;f.title.value=x.title;f.description.value=x.description;openForm('notice');f.scrollIntoView({behavior:'smooth',block:'start'})}
+function renderAdminData(){
+  const orderedMembers=members.slice().sort(memberSort);
+  q('adminMembers').innerHTML=`<table><thead><tr><th>ক্রম</th><th class="name">নাম</th><th>মোবাইল</th><th>অ্যাকশন</th></tr></thead><tbody>`+orderedMembers.map((m,i)=>`<tr><td>${Number(m.serial_no||i+1).toLocaleString('bn-BD')}</td><td class="name">${esc(m.name)}</td><td>${esc(m.mobile||'-')}</td><td class="row-actions"><button class="small-btn edit" onclick="editMember('${esc(m.id)}')">Edit</button><button class="small-btn del" onclick="del('members','${esc(m.id)}')">Delete</button></td></tr>`).join('')+`</tbody></table>`;
+  const selectedYear=q('paymentManageYear').value||'all';
+  const selectedMonth=q('paymentManageMonth')?.value||'all';
+  const selectedMember=q('paymentManageMember')?.value||'';
+  const paymentRows=payments.filter(p=>{
+    // ০ টাকার placeholder record database-এ থাকবে, কিন্তু Excel-এর প্রকৃত জমার
+    // তালিকার সঙ্গে মিল রেখে Admin management-এ শুধু বাস্তব জমা দেখানো হবে।
+    if(Number(p.paid_amount||0)<=0)return false;
+    if(selectedYear!=='all' && String(p.year)!==String(selectedYear))return false;
+    if(selectedMonth!=='all' && Number(p.month)!==Number(selectedMonth))return false;
+    if(selectedMember && String(p.member_id)!==String(selectedMember))return false;
+    return true;
+  }).slice().sort((a,b)=>{
+    const ma=members.find(m=>String(m.id)===String(a.member_id))||{};
+    const mb=members.find(m=>String(m.id)===String(b.member_id))||{};
+    return memberSort(ma,mb)||Number(a.year)-Number(b.year)||Number(a.month)-Number(b.month);
+  });
+  q('adminPayments').innerHTML=`<table><thead><tr><th>ক্রম</th><th class="name">সদস্য</th><th>সাল</th><th>মাস</th><th>জমা</th><th>অ্যাকশন</th></tr></thead><tbody>`+paymentRows.map((p,i)=>{const m=members.find(x=>String(x.id)===String(p.member_id))||{};return `<tr><td>${Number(m.serial_no||i+1).toLocaleString('bn-BD')}</td><td class="name">${esc(m.name||'')}</td><td>${esc(p.year)}</td><td>${months[Number(p.month)-1]||''}</td><td>${money(p.paid_amount)}</td><td class="row-actions"><button class="small-btn edit" onclick="editPayment('${esc(p.id)}')">Edit</button><button class="small-btn del" onclick="del('payments','${esc(p.id)}')">Delete</button></td></tr>`}).join('')+`</tbody></table>`;
+  q('adminProfits').innerHTML=`<div class="detail-block admin-profit-ledger"><div class="detail-heading"><span>📈</span><h3>লভ্যাংশের মূল হিসাব</h3></div><div class="table-wrap"><table class="detail-table"><thead><tr><th>সাল</th><th class="name">বিবরণ</th><th>লভ্যাংশ</th><th>অ্যাকশন</th></tr></thead><tbody>`+
+  profits.map(x=>`<tr><td>${esc(x.year)}</td><td class="name">${esc(x.description||'')}</td><td>${money(x.total_profit)}</td><td class="row-actions"><button class="small-btn edit" onclick="editProfit('${esc(x.id)}')">Edit</button><button class="small-btn del" onclick="del('profits','${esc(x.id)}')">Delete</button></td></tr>`).join('')+
+  `</tbody></table></div></div>`;
+  q('adminDividendVisibility').innerHTML=`<div class="dividend-global-actions"><button type="button" class="small-btn dividend-public-all" onclick="setAllDividendVisibility(true)">🟢 সকল সদস্যের লভ্যাংশ Public করুন</button><button type="button" class="small-btn dividend-hide-all" onclick="setAllDividendVisibility(false)">🔴 সকল সদস্যের লভ্যাংশ Hide করুন</button></div><table><thead><tr><th>ক্রম</th><th class="name">সদস্য</th><th>মোট জমা</th><th>প্রাপ্য লভ্যাংশ</th><th>অবস্থা</th><th>অ্যাকশন</th></tr></thead><tbody>`+
+  orderedMembers.map((m,i)=>`<tr><td>${Number(m.serial_no||i+1).toLocaleString('bn-BD')}</td><td class="name">${esc(m.name)}</td><td>${money(memberPaid(m,'all'))}</td><td>${money(memberDividend(m))}</td><td>${isDividendPublic(m.id)?'<span class="dividend-status public">🟢 Public</span>':'<span class="dividend-status hidden">🔴 Hidden</span>'}</td><td class="row-actions"><button class="small-btn ${isDividendPublic(m.id)?'del':'edit'}" onclick="toggleDividendVisibility('${esc(m.id)}')">${isDividendPublic(m.id)?'Hide':'Public'}</button></td></tr>`).join('')+
+  `</tbody></table>`;
+  q('adminExpenses').innerHTML=`<table><thead><tr><th>বছর</th><th class="name">বিবরণ</th><th>পরিমাণ</th><th>অ্যাকশন</th></tr></thead><tbody>`+expenses.map(x=>`<tr><td>${esc(x.year)}</td><td class="name">${esc(x.description)}</td><td>${money(x.amount)}</td><td class="row-actions"><button class="small-btn edit" onclick="editExpense('${esc(x.id)}')">Edit</button><button class="small-btn del" onclick="del('expenses','${esc(x.id)}')">Delete</button></td></tr>`).join('')+`</tbody></table>`;
+  q('adminAssets').innerHTML=`<table><thead><tr><th>বছর</th><th>খাত</th><th class="name">বিবরণ</th><th>পরিমাণ</th><th>অ্যাকশন</th></tr></thead><tbody>`+assets.map(x=>`<tr><td>${esc(x.year)}</td><td>${esc(x.category)}</td><td class="name">${esc(x.description)}</td><td>${money(x.amount)}</td><td class="row-actions"><button class="small-btn edit" onclick="editAsset('${esc(x.id)}')">Edit</button><button class="small-btn del" onclick="del('assets','${esc(x.id)}')">Delete</button></td></tr>`).join('')+`</tbody></table>`;
+  q('adminNotices').innerHTML=`<table><thead><tr><th>শিরোনাম</th><th class="name">বিবরণ</th><th>তারিখ</th><th>অ্যাকশন</th></tr></thead><tbody>`+notices.map(x=>`<tr><td>${esc(x.title)}</td><td class="name">${esc(x.description)}</td><td>${esc(x.publish_date||'')}</td><td class="row-actions"><button class="small-btn edit" onclick="editNotice('${esc(x.id)}')">Edit</button><button class="small-btn del" onclick="del('notices','${esc(x.id)}')">Delete</button></td></tr>`).join('')+`</tbody></table>`;
+}
+function setPublicLanding(isAuthenticated){
+  const gate=q('authGate'),main=q('mainContent'),menuBtn=q('menuBtn');
+  if(gate)gate.hidden=!!isAuthenticated;
+  if(main)main.hidden=!isAuthenticated;
+  if(menuBtn)menuBtn.hidden=!isAuthenticated;
+  if(!isAuthenticated){
+    const box=q('gateLoginBox');
+    if(box)box.hidden=true;
+    setMenu(false);
+  }
+}
+function showAdminGate(showLogin=false){
+  const box=q('gateLoginBox');
+  setPublicLanding(false);
+  if(box)box.hidden=!showLogin;
+}
+function showAuthenticatedMain(){
+  setPublicLanding(true);
+  route();
+}
+async function checkAdmin(){
+  if(!memberSb){showAdminGate(true);q('gateLoginMsg').textContent='Admin authentication configuration পাওয়া যায়নি।';return false}
+  const {data:{session}}=await memberSb.auth.getSession();
+  adminUser=session?.user||null;
+  if(!adminUser){showAdminGate(false);return false}
+  const {data,error}=await memberSb.from('member_admins').select('user_id').eq('user_id',adminUser.id).maybeSingle();
+  if(error||!data){await memberSb.auth.signOut();showAdminGate(false);q('gateLoginMsg').textContent=error?'Admin permission যাচাই করা যায়নি।':'এই অ্যাকাউন্টে অ্যাডমিন অনুমতি নেই।';return false}
+  q('adminBox').hidden=false;q('adminUser').textContent=adminUser.email||'Admin';
+  if(sb){const {data:ms}=await sb.auth.getSession();mainAdminReady=!!ms?.session;}
+  showAuthenticatedMain();
+  await loadDividendVisibility();renderAdminData();
+  return true;
+}
+
+async function login(){
+  if(!memberSb){q('gateLoginMsg').textContent='Admin authentication configuration পাওয়া যায়নি।';return}
+  q('gateLoginMsg').textContent='লগইন হচ্ছে...';
+  const {error}=await memberSb.auth.signInWithPassword({email:q('gateAdminEmail').value.trim(),password:q('gateAdminPassword').value});
+  if(error){q('gateLoginMsg').textContent=error.message;return}
+  const ok=await checkAdmin();
+  if(ok){
+    const enteredEmail=q('gateAdminEmail').value.trim().toLowerCase();
+    const password=q('gateAdminPassword').value;
+    // Member Supabase ও Main Supabase-এ Admin email আলাদা হতে পারে।
+    // তাই অনুমোদিত দুই Admin email-এর mapping অনুযায়ী Main Supabase-এ চেষ্টা করা হয়।
+    const mainAdminEmails=[enteredEmail, 'mdkefayatullah25@gmail.com', 'alikhwanisbd@gmail.com'].filter((v,i,a)=>v&&a.indexOf(v)===i);
+    let mainAuthError=null;
+    if(sb){
+      for(const mainEmail of mainAdminEmails){
+        const attempt=await sb.auth.signInWithPassword({email:mainEmail,password});
+        if(!attempt.error){mainAuthError=null;break;}
+        mainAuthError=attempt.error;
+      }
+    }else mainAuthError=new Error('Main Supabase unavailable');
+    mainAdminReady=!mainAuthError;
+    if(mainAuthError){q('gateLoginMsg').textContent='এডমিন লগইন হয়েছে। তবে মূল হিসাবের Main Supabase Admin account-এর email/password মিলছে না। Main Supabase-এ অনুমোদিত Admin account-এর একই password ব্যবহার করুন।';}
+    else q('gateLoginMsg').textContent='এডমিন লগইন সফল হয়েছে।';
+    q('gateAdminPassword').value='';
+    await load();
+  }
+}
+
+async function logout(){if(memberSb)await memberSb.auth.signOut();if(sb)await sb.auth.signOut();mainAdminReady=false;location.hash='';location.reload()}
+function openForm(name){document.querySelectorAll('.admin-form').forEach(f=>f.classList.remove('active'));const f=q(name+'Form');if(f)f.classList.add('active')}
+function openManagement(name){document.querySelectorAll('.admin-data').forEach(x=>x.classList.remove('active'));q('managementArea').style.display='block';const target=q('manage'+name.charAt(0).toUpperCase()+name.slice(1));if(target)target.classList.add('active');if(name==='payments'||name==='profits'||name==='dividendVisibility')renderAdminData()}
+function setMenu(open){const menu=q('mobileMenu'),overlay=q('menuOverlay'),btn=q('menuBtn');menu.classList.toggle('open',open);overlay.classList.toggle('show',open);btn.setAttribute('aria-expanded',String(open));document.body.classList.toggle('menu-open',open)}
+function openMainMenu(){setMenu(true)}
+function route(){const id=(location.hash||'#personal').slice(1);const valid=['personal','members','due','profitExpenseDetails','fund','notices','admin'];const active=valid.includes(id)?id:'personal';document.querySelectorAll('.page-section').forEach(s=>s.classList.toggle('active',s.id===active));document.querySelectorAll('#mobileMenu a[data-view]').forEach(a=>a.classList.toggle('active',a.dataset.view===active));setMenu(false)}
+function printSection(id){
+  const target=q(id);
+  if(!target)return;
+
+  // Build a dedicated report-only print root directly under <body>.
+  // Android Chrome can snapshot the normal page if the print DOM is nested
+  // inside <main>, so the non-report body children are also hidden inline.
+  document.querySelectorAll('.print-section').forEach(x=>x.remove());
+
+  const printSectionEl=document.createElement('section');
+  printSectionEl.id='__printRoot';
+  printSectionEl.className='print-section';
+  const clone=target.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.classList.add('print-target');
+  clone.querySelectorAll('.result-print').forEach(x=>x.remove());
+
+  if(id==='personalResult'){
+    const summary=clone.querySelector('.compact-summary');
+    const details=clone.querySelector('.personal-print-details');
+    if(summary&&details)details.after(summary);
+  }
+
+  const header=document.createElement('div');
+  header.className='print-header-generated';
+  header.innerHTML='<h1>আল ইখওয়ান ইসলামী সংস্থা বাংলাদেশ</h1><p>বানিপুর, কেন্দুয়া, নেত্রকোনা, মোমেনশাহী, ঢাকা</p>';
+  clone.prepend(header);
+  printSectionEl.appendChild(clone);
+  document.body.appendChild(printSectionEl);
+
+  const bodyChildren=Array.from(document.body.children);
+  const hiddenChildren=[];
+  bodyChildren.forEach(el=>{
+    if(el===printSectionEl)return;
+    hiddenChildren.push({el,display:el.style.display});
+    el.style.display='none';
+  });
+  printSectionEl.style.display='block';
+  document.body.classList.add('printing-report');
+
+  let cleaned=false;
+  const cleanup=()=>{
+    if(cleaned)return;
+    cleaned=true;
+    hiddenChildren.forEach(item=>{item.el.style.display=item.display});
+    try{printSectionEl.remove()}catch(e){}
+    document.body.classList.remove('printing-report');
+  };
+
+  const waitForReady=async()=>{
+    try{if(document.fonts&&document.fonts.ready)await document.fonts.ready}catch(e){}
+    const images=Array.from(clone.querySelectorAll('img'));
+    await Promise.all(images.map(img=>{
+      if(img.complete)return Promise.resolve();
+      return new Promise(resolve=>{
+        const done=()=>{img.removeEventListener('load',done);img.removeEventListener('error',done);resolve()};
+        img.addEventListener('load',done,{once:true});
+        img.addEventListener('error',done,{once:true});
+      });
+    }));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  };
+
+  waitForReady().then(()=>{
+    void printSectionEl.offsetHeight;
+    setTimeout(()=>{
+      try{
+        window.focus();
+        window.print();
+        // Keep the print-only DOM alive briefly because Android Chrome may
+        // fire afterprint before its preview snapshot has fully completed.
+        setTimeout(cleanup,12000);
+      }catch(e){
+        cleanup();
+        showMessage('PDF/Print চালু করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।',false);
+      }
+    },500);
+  });
+}
+
+function reportShell(title,subtitle,body,landscape=false){
+  return `<!doctype html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>
+  *{box-sizing:border-box}body{margin:0;padding:24px;background:#fff;color:#17221f;font-family:Arial,"Noto Sans Bengali","Noto Sans",sans-serif}
+  .report{max-width:${landscape?'1700px':'900px'};margin:0 auto}.head{text-align:center;margin-bottom:18px}.head h1{margin:0;font-size:28px;font-weight:800}.head p{margin:5px 0 0;font-size:13px;color:#65736e}.title{text-align:center;margin-bottom:18px}.title h2{margin:0 0 5px;font-size:22px}.title p{margin:0;font-size:13px;color:#65736e}
+  .meta{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:14px}.meta>div{border:1px solid #d6e2dd;padding:8px 10px;border-radius:6px}.meta span{display:block;font-size:11px;color:#687772}.meta strong{display:block;margin-top:2px;font-size:14px}
+  .table-wrap{width:100%;overflow-x:auto}table{width:100%;border-collapse:collapse;background:#fff}th,td{border:1px solid #c9d6d1;text-align:center;padding:4px 3px;font-size:10px;line-height:1.2;white-space:nowrap}th{font-weight:800;background:#f0f6f3}td.name,th.name{text-align:left;white-space:nowrap}.personal-report-table th,.personal-report-table td{padding-top:6px;padding-bottom:6px}.total-row td{font-weight:800;background:#f6faf8}.all-members-report-table{table-layout:fixed}.all-members-report-table .col-serial{width:4%}.all-members-report-table .col-name{width:14%}.all-members-report-table .col-total{width:8%}.all-members-report-table .col-due{width:8%}.all-members-report-table .col-year{width:15%}.all-members-report-table .col-month{width:5.5%}.all-members-report-table.all-years-report-table .col-total{width:11%}.all-members-report-table.all-years-report-table .col-due{width:11%}.all-members-report-table thead.report-table-head th{background:#e7f3ed;text-align:center!important}.all-members-report-table th:first-child,.all-members-report-table td:first-child{padding-left:1px;padding-right:1px}.all-members-report-table th.name,.all-members-report-table td.name{width:auto;white-space:nowrap;text-align:left;overflow:hidden;text-overflow:ellipsis}
+  .summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.summary>div{border:1px solid #cfded8;border-radius:7px;padding:9px;text-align:center;background:#f7fbf9}.summary span{display:block;font-size:11px;color:#63716c}.summary strong{display:block;margin-top:3px;font-size:17px}
+  .download-note{margin-top:16px;text-align:center;font-size:11px;color:#687772}@media print{@page{margin:10mm}.report{max-width:none!important}.head{margin-top:0}.table-wrap{overflow:visible!important}table{width:100%!important;table-layout:fixed}thead{display:table-row-group!important}tfoot{display:table-row-group!important}.total-row{break-inside:avoid!important;page-break-inside:avoid!important}.summary{break-inside:avoid!important;page-break-inside:avoid!important}.pdf-landscape{page-break-before:auto}.pdf-landscape table{font-size:8px!important}.pdf-landscape th,.pdf-landscape td{font-size:8px!important;padding:3px 2px!important}}@media(max-width:600px){body{padding:8px}.head h1{font-size:22px}.title h2{font-size:18px}.meta{grid-template-columns:1fr}.report{max-width:none}th,td{font-size:9px;padding:3px 2px}}
+</style></head><body><main class="report"><div class="head"><h1>আল ইখওয়ান ইসলামী সংস্থা বাংলাদেশ</h1><p>বানিপুর, কেন্দুয়া, নেত্রকোনা, মোমেনশাহী, ঢাকা</p></div><div class="title"><h2>${esc(title)}</h2><p>${esc(subtitle)}</p></div>${body}</main></body></html>`;
+}
+function downloadHtmlFile(filename,html){
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function downloadPersonalReport(){
+  const y=q('personalYear').value,id=q('personalMember').value;
+  if(!y||!id){showMessage('আগে সাল ও সদস্য নির্বাচন করে অনুসন্ধান করুন।',false);return;}
+  const m=members.find(x=>String(x.id)===String(id));if(!m)return;
+
+  if(y==='all'){
+    const rows=years.map(yr=>{
+      const monthCells=months.map((_,mi)=>`<td>${paidCell(m,yr,mi+1)}</td>`).join('');
+      return `<tr><td>${esc(yr)}</td>${monthCells}<td>${money(memberPaid(m,yr))}</td><td>${money(memberDue(m,yr))}</td></tr>`;
+    }).join('');
+    const body=`<div class="table-wrap"><table class="personal-report-table"><thead><tr><th>সাল</th>${months.map(monthName=>`<th>${monthName}</th>`).join('')}<th>মোট পরিশোধ</th><th>মোট বাকি</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="summary"><div><span>মোট পরিশোধ</span><strong>${money(memberPaid(m,'all'))}</strong></div><div><span>মোট বাকি</span><strong>${money(memberDue(m,'all'))}</strong></div><div><span>মোট লভ্যাংশ</span><strong>${canViewDividend(m.id)?money(memberDividend(m)):'গোপন'}</strong></div><div><span>সর্বমোট প্রাপ্য</span><strong>${money(memberPaid(m,'all')+(canViewDividend(m.id)?memberDividend(m):0))}</strong></div></div>`;
+    downloadHtmlFile(`personal-all-${String(m.name).replace(/[^\u0980-\u09FFa-zA-Z0-9_-]+/g,'-')}.html`,reportShell(`${esc(m.name)} - সকল বছরের হিসাব`,'মাসভিত্তিক সকল বছরের হিসাব',body,false));
     return;
   }
 
-  const links=Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-    .map(l=>`<link rel="stylesheet" href="${l.href}">`).join("");
-
-  win.document.open();
-  win.document.write(`<!doctype html>
-<html lang="bn">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)}</title>
-${links}
-<style>
-@page{size:A4 ${orientation};margin:8mm}
-@page classwisePage{size:A4 landscape;margin:7mm}
-html,body{background:#fff!important;color:#111!important;margin:0!important;padding:0!important}
-body{font-family:'Noto Sans Bengali',Arial,sans-serif!important}
-.result-head,.classwise-head{break-inside:avoid}
-.table-wrap{overflow:visible!important}
-.result-table{width:100%!important;border-collapse:collapse!important}
-.result-table th,.result-table td{border:1px solid #222!important}
-.print-row{display:none!important}
-@media print{
-  .result-card,.info-card,.contact-card,footer,.top-header,.print-row{display:none!important}
+  const detailRows=months.map((monthName,idx)=>{
+    const paid=memberMonthPaid(m,y,idx+1),due=Math.max(MONTHLY_REQUIRED-paid,0);
+    return `<tr><td>${monthName}</td><td>${paid>0?Number(paid).toLocaleString('bn-BD'):'০'}</td><td>${Number(due).toLocaleString('bn-BD')}</td></tr>`;
+  }).join('');
+  const body=`<div class="table-wrap"><table class="personal-report-table"><thead><tr><th>মাস</th><th>মোট পরিশোধ</th><th>মোট বাকি</th></tr></thead><tbody>${detailRows}</tbody><tfoot><tr class="total-row"><td>সর্বমোট</td><td>${money(memberPaid(m,y))}</td><td>${money(memberDue(m,y))}</td></tr></tfoot></table></div><div class="summary"><div><span>মোট পরিশোধ</span><strong>${money(memberPaid(m,y))}</strong></div><div><span>মোট বাকি</span><strong>${money(memberDue(m,y))}</strong></div></div>`;
+  downloadHtmlFile(`personal-${String(y).replace(/[^0-9a-zA-Z_-]/g,'')}-${String(m.name).replace(/[^\u0980-\u09FFa-zA-Z0-9_-]+/g,'-')}.html`,reportShell(`${esc(m.name)} - ব্যক্তিগত হিসাব`,'মাসভিত্তিক বিস্তারিত হিসাব',body,false));
 }
-</style>
-</head>
-<body>
-${htmlContent}
-<script>
-(function(){
-  function doPrint(){
-    try{window.focus();window.print();}catch(e){}
+function reportColumnWidths(type='years'){
+  const serialWidth=4;
+  const nameLength=Math.max(4,...members.map(m=>String(m.name||'').trim().length||4));
+  const nameWidth=Math.min(22,Math.max(18,16+(nameLength-12)*0.25));
+  const remaining=100-serialWidth-nameWidth;
+  if(type==='years'){
+    const yearWidth=remaining/(years.length+2);
+    const totalWidth=yearWidth;
+    return {serialWidth,nameWidth,yearWidth,totalWidth};
   }
-  if(document.readyState==="complete"){setTimeout(doPrint,500);}
-  else{window.addEventListener("load",function(){setTimeout(doPrint,500);});}
-})();
-<\/script>
-</body>
-</html>`);
-  win.document.close();
+  const monthWidth=remaining/(months.length+2);
+  const totalWidth=monthWidth;
+  return {serialWidth,nameWidth,monthWidth,totalWidth};
 }
-
-function printResultArea(){
-  if(!resultArea || resultArea.classList.contains("hidden") || !currentPersonalStudent) return;
-  openPrintWindow(buildPersonalPrintSheet(currentPersonalStudent),"ব্যক্তিগত ফলাফল");
-}
-
-function printClassWiseResult(){
-  if(!classWiseResult || classWiseResult.classList.contains("hidden")) return;
-  openPrintWindow(classWiseResult.innerHTML,"শ্রেণিভিত্তিক ফলাফল","landscape");
-}
-
-function printAPlusResult(){
-  if(!aplusPanel || aplusPanel.classList.contains("hidden")) return;
-  const title=listType.value==="merit" ? "মেধা তালিকা" : "A+ প্রাপ্তদের তালিকা";
-  openPrintWindow(aplusPanel.innerHTML,title,"landscape");
-}
-
-listForm.addEventListener("submit",e=>{
-  e.preventDefault();
-  if(!listType.value||!listYear.value||!listExam.value){
-    aplusResult.innerHTML='<div class="classwise-empty">অনুগ্রহ করে তালিকা, সাল ও পরীক্ষা নির্বাচন করুন।</div>';
-    aplusResult.classList.remove("hidden");
-    return;
+function downloadAllMembersReport(){
+  const y=q('allMembersYear').value||'all';
+  if(!y){showMessage('আগে একটি সাল নির্বাচন করে হিসাব দেখুন।',false);return;}
+  if(y==='all'){
+    let rows='';
+    members.forEach((m,i)=>{rows+=`<tr><td>${Number(m.serial_no||i+1).toLocaleString('bn-BD')}</td><td class="name">${esc(m.name)}</td>`+years.map(v=>`<td>${memberPaid(m,v)>0?Number(memberPaid(m,v)).toLocaleString('bn-BD'):''}</td>`).join('')+`<td>${money(memberPaid(m,'all'))}</td><td>${money(memberDue(m,'all'))}</td></tr>`});
+    const totalCells=years.map(v=>`<td>${totalPaid(v)>0?Number(totalPaid(v)).toLocaleString('bn-BD'):''}</td>`).join('');
+    const widths=reportColumnWidths('years');
+    const body=`<div class="table-wrap"><table class="all-members-report-table all-years-report-table"><colgroup><col class="col-serial" style="width:${widths.serialWidth}%"><col class="col-name" style="width:${widths.nameWidth}%">${years.map(()=>`<col class="col-year" style="width:${widths.yearWidth}%">`).join('')}<col class="col-total" style="width:${widths.totalWidth}%"><col class="col-due" style="width:${widths.totalWidth}%"></colgroup><thead class="report-table-head"><tr><th>ক্রমিক</th><th class="name">সদস্যের নাম</th>${years.map(v=>`<th>${esc(v)}</th>`).join('')}<th>মোট পরিশোধ</th><th>মোট বাকি</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="total-row"><td colspan="2">সর্বমোট</td>${totalCells}<td>${Number(totalPaid('all')).toLocaleString('bn-BD')}</td><td>${Number(totalDue('all')).toLocaleString('bn-BD')}</td></tr></tfoot></table></div>`;
+    downloadHtmlFile('all-members-all-years.html',reportShell('সকল বছরের সকল সদস্যদের হিসাব','সকল বছরের বিস্তারিত হিসাব',body,true));return;
   }
-  showListResult();
+  let rows='';
+  members.forEach((m,i)=>{rows+=`<tr><td>${Number(m.serial_no||i+1).toLocaleString('bn-BD')}</td><td class="name">${esc(m.name)}</td>`+months.map((_,mi)=>`<td>${paidCell(m,y,mi+1)}</td>`).join('')+`<td>${Number(memberPaid(m,y)).toLocaleString('bn-BD')}</td><td>${Number(memberDue(m,y)).toLocaleString('bn-BD')}</td></tr>`});
+  const monthTotals=months.map((_,mi)=>{const x=payments.filter(p=>isCountablePayment(p)&&Number(normalizeYear(p.year))===Number(normalizeYear(y))&&Number(p.month)===mi+1).reduce((s,p)=>s+Number(p.paid_amount||0),0);return `<td>${x>0?Number(x).toLocaleString('bn-BD'):''}</td>`}).join('');
+  const widths=reportColumnWidths('months');
+  const body=`<div class="table-wrap"><table class="all-members-report-table yearly-report-table"><colgroup><col class="col-serial" style="width:${widths.serialWidth}%"><col class="col-name" style="width:${widths.nameWidth}%">${months.map(()=>`<col class="col-month" style="width:${widths.monthWidth}%">`).join('')}<col class="col-total" style="width:${widths.totalWidth}%"><col class="col-due" style="width:${widths.totalWidth}%"></colgroup><thead class="report-table-head"><tr><th>ক্রমিক</th><th class="name">সদস্যের নাম</th>${months.map(m=>`<th>${m}</th>`).join('')}<th>মোট পরিশোধ</th><th>মোট বাকি</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="total-row"><td colspan="2">সর্বমোট</td>${monthTotals}<td>${Number(totalPaid(y)).toLocaleString('bn-BD')}</td><td>${Number(totalDue(y)).toLocaleString('bn-BD')}</td></tr></tfoot></table></div>`;
+  downloadHtmlFile(`all-members-${y}.html`,reportShell(`${y} সালের সকল সদস্যদের হিসাব`,'প্রতি মাসে শুধু পরিশোধের পরিমাণ দেখানো হয়েছে',body,true));
+}
+function csvDownload(name,rows){const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function downloadAllMembersCSV(){const y=q('allMembersYear').value||'all';const rows=[['ক্রমিক','সদস্যের নাম',...(y==='all'?years:months),'মোট পরিশোধ','মোট বাকি']];members.forEach((m,i)=>rows.push([m.serial_no||i+1,m.name,...(y==='all'?years.map(v=>memberPaid(m,v)):months.map((_,mi)=>payments.filter(p=>isCountablePayment(p)&&String(p.member_id)===String(m.id)&&Number(normalizeYear(p.year))===Number(normalizeYear(y))&&Number(p.month)===mi+1).reduce((s,p)=>s+Number(p.paid_amount||0),0))),memberPaid(m,y),memberDue(m,y)]));csvDownload(`members-${y}.csv`,rows)}
+function downloadAssetsCSV(){csvDownload('fund-assets.csv',[['বছর','খাত','বিস্তারিত','পরিমাণ','তারিখ'],...assets.map(a=>[a.year,a.category,a.description,a.amount,a.date])])}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  q('footerYear').textContent=new Date().getFullYear();
+  q('menuBtn').addEventListener('click',()=>setMenu(true));q('menuClose').addEventListener('click',()=>setMenu(false));q('menuOverlay').addEventListener('click',()=>setMenu(false));document.querySelectorAll('#mobileMenu a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));window.addEventListener('hashchange',route);
+  q('personalForm').addEventListener('submit',e=>{e.preventDefault();renderPersonal()});q('membersForm').addEventListener('submit',e=>{e.preventDefault();renderAllMembers()});q('paymentManageYear').addEventListener('change',()=>renderAdminData());q('paymentManageMonth').addEventListener('change',()=>renderAdminData());q('paymentManageMember').addEventListener('change',()=>renderAdminData());
+  q('gateAdminBtn').addEventListener('click',()=>{q('gateLoginBox').hidden=false;q('gateAdminEmail').focus()});q('gateLoginBtn').addEventListener('click',login);q('logoutBtn').addEventListener('click',logout);
+  q('addOpen').addEventListener('click',()=>{const value=q('addSelect').value;if(!value){showMessage('আগে একটি যুক্ত করার বিষয় নির্বাচন করুন।',false);return}openForm(value);q('addArea').scrollIntoView({behavior:'smooth',block:'start'})});
+  q('manageOpen').addEventListener('click',()=>{const value=q('manageSelect').value;if(!value){showMessage('আগে একটি সম্পাদনার বিষয় নির্বাচন করুন।',false);return}openManagement(value);q('managementArea').scrollIntoView({behavior:'smooth',block:'start'})});
+  q('memberForm').addEventListener('submit',e=>{e.preventDefault();saveMember()});q('paymentForm').addEventListener('submit',e=>{e.preventDefault();savePayment()});q('profitForm').addEventListener('submit',e=>{e.preventDefault();saveProfit()});q('expenseForm').addEventListener('submit',e=>{e.preventDefault();saveExpense()});q('assetForm').addEventListener('submit',e=>{e.preventDefault();saveAsset()});q('noticeForm').addEventListener('submit',e=>{e.preventDefault();saveNotice()});
+  setPublicLanding(false);checkAdmin().then(ok=>{if(ok)load();});
 });
-
-listType.addEventListener("change",()=>{ aplusResult.classList.add("hidden"); aplusMeta.innerHTML=""; listPrintRow.classList.add("hidden"); });
-listYear.addEventListener("change",()=>{ fillSelect(listExam,examOptions,"-- পরীক্ষা নির্বাচন করুন --"); aplusResult.classList.add("hidden"); aplusMeta.innerHTML=""; listPrintRow.classList.add("hidden"); });
-listExam.addEventListener("change",()=>{ aplusResult.classList.add("hidden"); aplusMeta.innerHTML=""; listPrintRow.classList.add("hidden"); });
-
-document.getElementById("classWiseForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  const y=classYear.value, ev=classWiseExam.value, c=classWiseName.value;
-  if(!y||!ev||!c){
-    classWiseResult.innerHTML='<div class="classwise-empty">অনুগ্রহ করে সাল, পরীক্ষা ও শ্রেণি নির্বাচন করুন।</div>';
-    classWiseResult.classList.remove("hidden");
-    return;
-  }
-  showClassWiseResult();
-});
-
-document.querySelectorAll("[data-view]").forEach(link=>link.addEventListener("click",e=>{
-  e.preventDefault();
-  const view=link.dataset.view;
-
-  personalPanel.classList.add("hidden");
-  classPanel.classList.add("hidden");
-  aplusPanel.classList.add("hidden");
-  resultArea.classList.add("hidden");
-
-  if(view==="personal"){
-    personalPanel.classList.remove("hidden");
-  }else if(view==="classwise"){
-    classPanel.classList.remove("hidden");
-  }else if(view==="aplus"){
-    resetListForm();
-    aplusPanel.classList.remove("hidden");
-  }
-
-  closeMenu();
-  window.scrollTo({top:0,behavior:"smooth"});
-}));
-
-function openMenu(){ menu.classList.add("open"); overlay.classList.add("show"); document.body.classList.add("menu-open"); }
-function closeMenu(){ menu.classList.remove("open"); overlay.classList.remove("show"); document.body.classList.remove("menu-open"); }
-document.getElementById("menuBtn").addEventListener("click",openMenu);
-document.getElementById("menuClose").addEventListener("click",closeMenu);
-overlay.addEventListener("click",closeMenu);
-
-document.querySelectorAll("#mobileMenu a").forEach(a=>a.addEventListener("click",closeMenu));
-loadResultData();
